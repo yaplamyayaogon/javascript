@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -194,44 +194,46 @@
 
     <div class="input-group">
         <label for="api-key">RunningHub API Key</label>
-        <input type="text" id="api-key" placeholder="Введите ваш 32-битный ключ...">
+        <input type="text" id="api-key" placeholder="Enter your 32-bit API Key...">
     </div>
 
     <div class="drop-zone" id="drop-zone">
-        <p id="file-info">Нажмите или перетащите фото сюда</p>
+        <p id="file-info">Click or drag & drop a photo here</p>
         <input type="file" id="file-input" accept="image/*" style="display: none;">
     </div>
 
-    <button id="start-btn" disabled>Начать генерацию</button>
+    <button id="start-btn" disabled>Start Generation</button>
 
     <div class="status-panel" id="status-panel">
         <div class="step" id="step-upload">
-            <div class="step-icon">1</div> Загрузка изображения на ImgBB...
+            <div class="step-icon">1</div> Uploading image to RunningHub...
         </div>
         <div class="step" id="step-submit">
-            <div class="step-icon">2</div> Отправка задачи в RunningHub...
+            <div class="step-icon">2</div> Submitting task to RunningHub...
         </div>
         <div class="step" id="step-process">
-            <div class="step-icon">3</div> Генерация видео (может занять 5-10 мин)...
+            <div class="step-icon">3</div> Generating video (may take 5-10 min)...
         </div>
     </div>
 
     <div id="result-container">
-        <h3>Результат готов!</h3>
+        <h3>Result is ready!</h3>
         <video id="output-video" controls></video>
         <div style="margin-top: 15px;">
-            <a id="download-link" href="#" download style="color: var(--primary); text-decoration: none;">⬇ Скачать видео</a>
+            <a id="download-link" href="#" download style="color: var(--primary); text-decoration: none;">⬇ Download video</a>
         </div>
     </div>
 
-    <div class="log-trigger" onclick="toggleLog()">Показать технический лог</div>
+    <div class="log-trigger" onclick="toggleLog()">Show Technical Log</div>
     <div id="console-log"></div>
 </div>
 
 <script>
+    // Configuration
     const WORKFLOW_ID = "2064081968639340545";
     const NODE_ID = "396";
 
+    // UI Elements
     const apiKeyInput = document.getElementById('api-key');
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -243,11 +245,11 @@
 
     let selectedFile = null;
 
-    // Load saved API Key
+    // Load saved API Key from localStorage
     const savedKey = localStorage.getItem('rh_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
 
-    // UI Events
+    // UI Event Listeners
     apiKeyInput.oninput = () => {
         localStorage.setItem('rh_api_key', apiKeyInput.value);
         validateInputs();
@@ -267,7 +269,7 @@
     function handleFile(file) {
         if (file && file.type.startsWith('image/')) {
             selectedFile = file;
-            document.getElementById('file-info').innerText = `Файл выбран: ${file.name}`;
+            document.getElementById('file-info').innerText = `File selected: ${file.name}`;
             validateInputs();
         }
     }
@@ -306,12 +308,12 @@
         try {
             // 1. Upload to RunningHub Native Storage
             setStep('step-upload', 'active');
-            log("Загрузка в облако RunningHub...");
+            log("Uploading to RunningHub cloud...");
             
             const uploadFormData = new FormData();
             uploadFormData.append('file', selectedFile);
             
-            // Используем эндпоинт загрузки RunningHub
+            // Use RunningHub binary upload endpoint
             const rhUploadRes = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
                 method: 'POST',
                 headers: {
@@ -323,16 +325,16 @@
             const rhUploadData = await rhUploadRes.json();
             
             if (rhUploadData.code !== 0) {
-                throw new Error("Ошибка загрузки RH: " + rhUploadData.message);
+                throw new Error("Upload error: " + rhUploadData.message);
             }
             
             const imageUrl = rhUploadData.data.download_url;
-            log(`Картинка загружена в RH: ${imageUrl}`, 'success');
+            log(`Image uploaded to RH: ${imageUrl}`, 'success');
             setStep('step-upload', 'completed');
 
-            // 2. Submit Task (используем полученный download_url)
+            // 2. Submit Task
             setStep('step-submit', 'active');
-            log("Отправка задачи...");
+            log("Submitting task...");
             
             const payload = {
                 nodeInfoList: [
@@ -340,11 +342,11 @@
                         nodeId: NODE_ID, 
                         fieldName: "image", 
                         fieldValue: imageUrl,
-                        description: "input_image" // Вернул как в Python
+                        description: "input_image"
                     }
                 ],
                 instanceType: "default",
-                usePersonalQueue: "false" // Вернул строку как в Python
+                usePersonalQueue: "false"
             };
 
             log("Payload: " + JSON.stringify(payload));
@@ -362,15 +364,15 @@
             
             if (!rhSubmitRes.ok || !rhSubmitData.taskId) {
                 const errorDetail = rhSubmitData.errorMessage || rhSubmitData.message || "Unknown Error";
-                log(`Ошибка сервера (${rhSubmitRes.status}): ${errorDetail}`, 'error');
-                throw new Error(`Ошибка запуска: ${errorDetail}`);
+                log(`Server error (${rhSubmitRes.status}): ${errorDetail}`, 'error');
+                throw new Error(`Submission failed: ${errorDetail}`);
             }
             
             const taskId = rhSubmitData.taskId;
-            log(`Задача принята! ID: ${taskId}`, 'success');
+            log(`Task accepted! ID: ${taskId}`, 'success');
             setStep('step-submit', 'completed');
 
-            // 3. Polling
+            // 3. Status Polling
             setStep('step-process', 'active');
             pollStatus(taskId, apiKey);
 
@@ -397,16 +399,16 @@
                 
                 const data = await res.json();
                 const status = data.status;
-                log(`Статус задачи: ${status}`);
+                log(`Task status: ${status}`);
 
                 if (status === 'SUCCESS') {
                     const videoUrl = data.results[0].url;
-                    log("Генерация завершена!", 'success');
+                    log("Generation complete!", 'success');
                     setStep('step-process', 'completed');
                     showResult(videoUrl);
                     break;
                 } else if (status === 'FAILED') {
-                    throw new Error("Генерация не удалась: " + (data.errorMessage || "Ошибка воркфлоу"));
+                    throw new Error("Generation failed: " + (data.errorMessage || "Workflow error"));
                 }
                 
                 await new Promise(r => setTimeout(r, 10000)); // Wait 10s
@@ -424,13 +426,13 @@
         const downloadLink = document.getElementById('download-link');
         downloadLink.href = url;
         
-        // Извлекаем имя файла из URL или задаем стандартное с расширением .mp4
+        // Extract filename from URL and ensure .mp4 extension
         const fileName = url.split('/').pop().split('?')[0].replace(/\.[^/.]+$/, "") + ".mp4";
         downloadLink.download = fileName;
         
         resultContainer.style.display = 'block';
         startBtn.disabled = false;
-        log("Видео готово к просмотру", 'success');
+        log("Video is ready for preview", 'success');
     }
 </script>
 

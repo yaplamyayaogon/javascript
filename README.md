@@ -1,15 +1,15 @@
 # RunningHub Video Generator
 
-Простой и элегантный веб-интерфейс для генерации видео из изображений с использованием API [RunningHub](https://www.runninghub.ai/).
+A simple and elegant web interface for generating videos from images using the [RunningHub](https://www.runninghub.ai/) API.
 
-## Особенности
-- Автоматическая загрузка изображений в облако RunningHub.
-- Отслеживание статуса генерации в реальном времени.
-- Встроенный плеер для просмотра результата.
-- Автоматическое сохранение API ключа в браузере.
+## Features
+- Automatic image upload to RunningHub cloud storage.
+- Real-time generation status tracking.
+- Built-in video player for instant preview.
+- Automatic API key saving in the browser.
 
-## Использование
-1. Откройте `index.html` в браузере.
-2. Введите ваш RunningHub API Key.
-3. Выберите или перетащите изображение.
-4. Нажмите "Начать генерацию" и дождитесь завершения.
+## Usage
+1. Open `index.html` in your browser.
+2. Enter your RunningHub API Key.
+3. Select or drag & drop an image.
+4. Click "Start Generation" and wait for the process to complete.
