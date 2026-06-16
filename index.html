@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RunningHub Video Generator</title>
+    <style>
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --bg: #0f0c29;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --error: #ff4b2b;
+            --success: #00f260;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 40px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.1);
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 40px 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(0, 210, 255, 0.05);
+        }
+
+        .drop-zone p { margin: 0; color: rgba(255, 255, 255, 0.7); }
+        .drop-zone i { font-size: 2rem; display: block; margin-bottom: 10px; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(0, 210, 255, 0.5);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            display: none;
+            text-align: left;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .step.active { color: var(--primary); font-weight: 500; }
+        .step.completed { color: var(--success); }
+        .step.failed { color: var(--error); }
+
+        .step-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        #result-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .log-trigger {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        #console-log {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Video Generator</h1>
+
+    <div class="input-group">
+        <label for="api-key">RunningHub API Key</label>
+        <input type="text" id="api-key" placeholder="Введите ваш 32-битный ключ...">
+    </div>
+
+    <div class="drop-zone" id="drop-zone">
+        <p id="file-info">Нажмите или перетащите фото сюда</p>
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+    </div>
+
+    <button id="start-btn" disabled>Начать генерацию</button>
+
+    <div class="status-panel" id="status-panel">
+        <div class="step" id="step-upload">
+            <div class="step-icon">1</div> Загрузка изображения на ImgBB...
+        </div>
+        <div class="step" id="step-submit">
+            <div class="step-icon">2</div> Отправка задачи в RunningHub...
+        </div>
+        <div class="step" id="step-process">
+            <div class="step-icon">3</div> Генерация видео (может занять 5-10 мин)...
+        </div>
+    </div>
+
+    <div id="result-container">
+        <h3>Результат готов!</h3>
+        <video id="output-video" controls></video>
+        <div style="margin-top: 15px;">
+            <a id="download-link" href="#" download style="color: var(--primary); text-decoration: none;">⬇ Скачать видео</a>
+        </div>
+    </div>
+
+    <div class="log-trigger" onclick="toggleLog()">Показать технический лог</div>
+    <div id="console-log"></div>
+</div>
+
+<script>
+    const WORKFLOW_ID = "2064081968639340545";
+    const NODE_ID = "396";
+
+    const apiKeyInput = document.getElementById('api-key');
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const startBtn = document.getElementById('start-btn');
+    const statusPanel = document.getElementById('status-panel');
+    const resultContainer = document.getElementById('result-container');
+    const outputVideo = document.getElementById('output-video');
+    const consoleLog = document.getElementById('console-log');
+
+    let selectedFile = null;
+
+    // Load saved API Key
+    const savedKey = localStorage.getItem('rh_api_key');
+    if (savedKey) apiKeyInput.value = savedKey;
+
+    // UI Events
+    apiKeyInput.oninput = () => {
+        localStorage.setItem('rh_api_key', apiKeyInput.value);
+        validateInputs();
+    };
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+    dropZone.ondrop = (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFile(e.dataTransfer.files[0]);
+    };
+
+    function handleFile(file) {
+        if (file && file.type.startsWith('image/')) {
+            selectedFile = file;
+            document.getElementById('file-info').innerText = `Файл выбран: ${file.name}`;
+            validateInputs();
+        }
+    }
+
+    function validateInputs() {
+        startBtn.disabled = !(selectedFile && apiKeyInput.value.length >= 30);
+    }
+
+    function log(msg, type = 'info') {
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.style.color = type === 'error' ? '#ff4b2b' : (type === 'success' ? '#00f260' : '#0f0');
+        entry.innerText = `[${time}] ${msg}`;
+        consoleLog.appendChild(entry);
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+
+    function toggleLog() {
+        consoleLog.style.display = consoleLog.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function setStep(id, status) {
+        const el = document.getElementById(id);
+        el.className = `step ${status}`;
+        if (status === 'active') el.querySelector('.step-icon').innerText = '●';
+        if (status === 'completed') el.querySelector('.step-icon').innerText = '✓';
+        if (status === 'failed') el.querySelector('.step-icon').innerText = '✕';
+    }
+
+    startBtn.onclick = async () => {
+        const apiKey = apiKeyInput.value.trim();
+        startBtn.disabled = true;
+        statusPanel.style.display = 'block';
+        resultContainer.style.display = 'none';
+        
+        try {
+            // 1. Upload to RunningHub Native Storage
+            setStep('step-upload', 'active');
+            log("Загрузка в облако RunningHub...");
+            
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', selectedFile);
+            
+            // Используем эндпоинт загрузки RunningHub
+            const rhUploadRes = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: uploadFormData
+            });
+            
+            const rhUploadData = await rhUploadRes.json();
+            
+            if (rhUploadData.code !== 0) {
+                throw new Error("Ошибка загрузки RH: " + rhUploadData.message);
+            }
+            
+            const imageUrl = rhUploadData.data.download_url;
+            log(`Картинка загружена в RH: ${imageUrl}`, 'success');
+            setStep('step-upload', 'completed');
+
+            // 2. Submit Task (используем полученный download_url)
+            setStep('step-submit', 'active');
+            log("Отправка задачи...");
+            
+            const payload = {
+                nodeInfoList: [
+                    { 
+                        nodeId: NODE_ID, 
+                        fieldName: "image", 
+                        fieldValue: imageUrl,
+                        description: "input_image" // Вернул как в Python
+                    }
+                ],
+                instanceType: "default",
+                usePersonalQueue: "false" // Вернул строку как в Python
+            };
+
+            log("Payload: " + JSON.stringify(payload));
+
+            const rhSubmitRes = await fetch(`https://www.runninghub.ai/openapi/v2/run/ai-app/${WORKFLOW_ID}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            const rhSubmitData = await rhSubmitRes.json();
+            
+            if (!rhSubmitRes.ok || !rhSubmitData.taskId) {
+                const errorDetail = rhSubmitData.errorMessage || rhSubmitData.message || "Unknown Error";
+                log(`Ошибка сервера (${rhSubmitRes.status}): ${errorDetail}`, 'error');
+                throw new Error(`Ошибка запуска: ${errorDetail}`);
+            }
+            
+            const taskId = rhSubmitData.taskId;
+            log(`Задача принята! ID: ${taskId}`, 'success');
+            setStep('step-submit', 'completed');
+
+            // 3. Polling
+            setStep('step-process', 'active');
+            pollStatus(taskId, apiKey);
+
+        } catch (err) {
+            log(err.message, 'error');
+            alert(err.message);
+            startBtn.disabled = false;
+        }
+    };
+
+    async function pollStatus(taskId, apiKey) {
+        const queryUrl = "https://www.runninghub.ai/openapi/v2/query";
+        
+        while (true) {
+            try {
+                const res = await fetch(queryUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({ taskId: taskId })
+                });
+                
+                const data = await res.json();
+                const status = data.status;
+                log(`Статус задачи: ${status}`);
+
+                if (status === 'SUCCESS') {
+                    const videoUrl = data.results[0].url;
+                    log("Генерация завершена!", 'success');
+                    setStep('step-process', 'completed');
+                    showResult(videoUrl);
+                    break;
+                } else if (status === 'FAILED') {
+                    throw new Error("Генерация не удалась: " + (data.errorMessage || "Ошибка воркфлоу"));
+                }
+                
+                await new Promise(r => setTimeout(r, 10000)); // Wait 10s
+            } catch (err) {
+                log(err.message, 'error');
+                setStep('step-process', 'failed');
+                startBtn.disabled = false;
+                break;
+            }
+        }
+    }
+
+    function showResult(url) {
+        outputVideo.src = url;
+        const downloadLink = document.getElementById('download-link');
+        downloadLink.href = url;
+        
+        // Извлекаем имя файла из URL или задаем стандартное с расширением .mp4
+        const fileName = url.split('/').pop().split('?')[0].replace(/\.[^/.]+$/, "") + ".mp4";
+        downloadLink.download = fileName;
+        
+        resultContainer.style.display = 'block';
+        startBtn.disabled = false;
+        log("Видео готово к просмотру", 'success');
+    }
+</script>
+
+</body>
+</html>
