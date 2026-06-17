@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RunningHub Video Generator</title>
+    <title><a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a> Video Generator</title>
     <style>
         :root {
             --primary: #00d2ff;
@@ -193,7 +193,7 @@
     <h1>Video Generator</h1>
 
     <div class="input-group">
-        <label for="api-key">RunningHub API Key</label>
+        <label for="api-key"><a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a> API Key</label>
         <input type="text" id="api-key" placeholder="Enter your 32-bit API Key...">
     </div>
 
@@ -206,10 +206,10 @@
 
     <div class="status-panel" id="status-panel">
         <div class="step" id="step-upload">
-            <div class="step-icon">1</div> Uploading image to RunningHub...
+            <div class="step-icon">1</div> Uploading image to <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a>...
         </div>
         <div class="step" id="step-submit">
-            <div class="step-icon">2</div> Submitting task to RunningHub...
+            <div class="step-icon">2</div> Submitting task to <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a>...
         </div>
         <div class="step" id="step-process">
             <div class="step-icon">3</div> Generating video (may take 5-10 min)...
@@ -306,14 +306,14 @@
         resultContainer.style.display = 'none';
         
         try {
-            // 1. Upload to RunningHub Native Storage
+            // 1. Upload to <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a> Native Storage
             setStep('step-upload', 'active');
-            log("Uploading to RunningHub cloud...");
+            log("Uploading to <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a> cloud...");
             
             const uploadFormData = new FormData();
             uploadFormData.append('file', selectedFile);
             
-            // Use RunningHub binary upload endpoint
+            // Use <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a> binary upload endpoint
             const rhUploadRes = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
                 method: 'POST',
                 headers: {

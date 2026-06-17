@@ -1,6 +1,6 @@
 # RunningHub Video Generator
 
-A simple and elegant web interface for generating videos from images using the [RunningHub](https://www.runninghub.ai/) API.
+A simple and elegant web interface for generating videos from images using the [RunningHub](https://www.runninghub.ai/?inviteCode=qlbtubgi) API.
 
 ## Features
 - Automatic image upload to RunningHub cloud storage.
