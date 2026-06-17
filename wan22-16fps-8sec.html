@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wan2.1 Video Generator</title>
+    <title>Wan2.2 Video Generator</title>
     <style>
         :root {
             --primary: #00d2ff;
@@ -56,33 +56,35 @@
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-align: left;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            font-size: 0.85rem;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.6);
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         input[type="text"], textarea {
             width: 100%;
-            padding: 12px 16px;
+            padding: 10px 14px;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            border-radius: 10px;
             color: white;
-            font-size: 1rem;
+            font-size: 0.95rem;
             box-sizing: border-box;
             transition: all 0.3s ease;
             font-family: inherit;
         }
 
         textarea {
-            height: 80px;
+            height: 60px;
             resize: vertical;
         }
 
@@ -95,10 +97,10 @@
         .drop-zone {
             border: 2px dashed rgba(255, 255, 255, 0.2);
             border-radius: 16px;
-            padding: 30px 20px;
+            padding: 20px;
             transition: all 0.3s ease;
             cursor: pointer;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             position: relative;
         }
 
@@ -107,7 +109,7 @@
             background: rgba(0, 210, 255, 0.05);
         }
 
-        .drop-zone p { margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; }
+        .drop-zone p { margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; }
 
         button {
             width: 100%;
@@ -120,7 +122,7 @@
             font-size: 1rem;
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            margin-top: 10px;
+            margin-top: 20px;
         }
 
         button:hover {
@@ -205,7 +207,7 @@
 <body>
 
 <div class="container">
-    <h1>Wan2.1 Generator</h1>
+    <h1>Wan2.2 Generator</h1>
     <p class="subtitle">Spit on another - 16fps - 8sec</p>
 
     <div class="input-group">
@@ -213,50 +215,80 @@
         <input type="text" id="api-key" placeholder="Enter your 32-bit API Key...">
     </div>
 
-    <div class="input-group">
-        <label for="prompt">Prompt (Node 52)</label>
-        <textarea id="prompt" placeholder="Enter your video description here..."></textarea>
-    </div>
-
+    <label>Image</label>
     <div class="drop-zone" id="drop-zone">
         <p id="file-info">Click or drag & drop a photo here</p>
         <input type="file" id="file-input" accept="image/*" style="display: none;">
+    </div>
+
+    <div class="input-group">
+        <label for="lora-high">LoRA High</label>
+        <input type="text" id="lora-high" value="POVcloseMoment_high.safetensors">
+    </div>
+
+    <div class="input-group">
+        <label for="strength-high">Strength LoRA High</label>
+        <input type="text" id="strength-high" value="1.0000000000000002">
+    </div>
+
+    <div class="input-group">
+        <label for="lora-low">LoRA Low</label>
+        <input type="text" id="lora-low" value="POVcloseMoment_low.safetensors">
+    </div>
+
+    <div class="input-group">
+        <label for="strength-low">Strength LoRA Low</label>
+        <input type="text" id="strength-low" value="1.0000000000000002">
+    </div>
+
+    <div class="input-group">
+        <label for="prompt">Prompt</label>
+        <textarea id="prompt" placeholder="Enter your video description..."></textarea>
+    </div>
+
+    <div class="input-group">
+        <label for="negative-prompt">Negative Prompt</label>
+        <textarea id="negative-prompt">色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走</textarea>
     </div>
 
     <button id="start-btn" disabled>Generate Video</button>
 
     <div class="status-panel" id="status-panel">
         <div class="step" id="step-upload">
-            <div class="step-icon">1</div> Uploading image to RunningHub...
+            <div class="step-icon">1</div> Uploading image...
         </div>
         <div class="step" id="step-submit">
-            <div class="step-icon">2</div> Submitting task with LoRAs...
+            <div class="step-icon">2</div> Submitting task to RunningHub...
         </div>
         <div class="step" id="step-process">
-            <div class="step-icon">3</div> Generating video (may take 5-10 min)...
+            <div class="step-icon">3</div> Generating video (5-10 min)...
         </div>
     </div>
 
     <div id="result-container">
-        <h3>Result is ready!</h3>
+        <h3>Result Ready!</h3>
         <video id="output-video" controls></video>
         <div style="margin-top: 15px;">
-            <a id="download-link" href="#" download style="color: var(--primary); text-decoration: none;">⬇ Download mp4</a>
+            <a id="download-link" href="#" download style="color: var(--primary); text-decoration: none;">⬇ Download Video</a>
         </div>
     </div>
 
-    <div class="log-trigger" onclick="toggleLog()">Show Technical Log</div>
+    <div class="log-trigger" onclick="toggleLog()">Technical Log</div>
     <div id="console-log"></div>
 </div>
 
 <script>
-    // Configuration for Wan2.1 Workflow
+    // Config
     const WORKFLOW_ID = "2067040305022595074";
-    const NEGATIVE_PROMPT = "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋의，残缺의，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走 ";
 
-    // UI Elements
+    // UI
     const apiKeyInput = document.getElementById('api-key');
     const promptInput = document.getElementById('prompt');
+    const negativePromptInput = document.getElementById('negative-prompt');
+    const loraHighInput = document.getElementById('lora-high');
+    const strengthHighInput = document.getElementById('strength-high');
+    const loraLowInput = document.getElementById('lora-low');
+    const strengthLowInput = document.getElementById('strength-low');
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
     const startBtn = document.getElementById('start-btn');
@@ -267,16 +299,18 @@
 
     let selectedFile = null;
 
-    // Load saved API Key from localStorage
+    // Load API Key
     const savedKey = localStorage.getItem('rh_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
 
-    // UI Event Listeners
+    // Events
     apiKeyInput.oninput = () => {
         localStorage.setItem('rh_api_key', apiKeyInput.value);
         validateInputs();
     };
-    promptInput.oninput = validateInputs;
+    [promptInput, negativePromptInput, loraHighInput, strengthHighInput, loraLowInput, strengthLowInput].forEach(el => {
+        el.oninput = validateInputs;
+    });
 
     dropZone.onclick = () => fileInput.click();
     fileInput.onchange = (e) => handleFile(e.target.files[0]);
@@ -292,7 +326,7 @@
     function handleFile(file) {
         if (file && file.type.startsWith('image/')) {
             selectedFile = file;
-            document.getElementById('file-info').innerText = `Image: ${file.name}`;
+            document.getElementById('file-info').innerText = `File: ${file.name}`;
             validateInputs();
         }
     }
@@ -324,17 +358,14 @@
 
     startBtn.onclick = async () => {
         const apiKey = apiKeyInput.value.trim();
-        const prompt = promptInput.value.trim();
-        
         startBtn.disabled = true;
         statusPanel.style.display = 'block';
         resultContainer.style.display = 'none';
         
         try {
-            // 1. Upload to RunningHub Native Storage
+            // 1. Upload
             setStep('step-upload', 'active');
-            log("Uploading image to RunningHub storage...");
-            
+            log("Uploading image...");
             const uploadFormData = new FormData();
             uploadFormData.append('file', selectedFile);
             
@@ -343,7 +374,6 @@
                 headers: { 'Authorization': `Bearer ${apiKey}` },
                 body: uploadFormData
             });
-            
             const rhUploadData = await rhUploadRes.json();
             if (rhUploadData.code !== 0) throw new Error("Upload failed: " + rhUploadData.message);
             
@@ -351,25 +381,24 @@
             log(`Image uploaded: ${imageUrl}`, 'success');
             setStep('step-upload', 'completed');
 
-            // 2. Submit Task with Complex Payload
+            // 2. Submit
             setStep('step-submit', 'active');
-            log("Configuring workflow nodes and LoRAs...");
+            log("Submitting task...");
             
             const payload = {
                 nodeInfoList: [
                     { nodeId: "396", fieldName: "image", fieldValue: imageUrl, description: "Image" },
-                    { nodeId: "64", fieldName: "lora_name", fieldValue: "POVcloseMoment_high.safetensors", description: "LoRA High" },
-                    { nodeId: "64", fieldName: "strength_model", fieldValue: "1.0000000000000002", description: "Strength LoRA High" },
-                    { nodeId: "222", fieldName: "lora_name", fieldValue: "POVcloseMoment_low.safetensors", description: "LoRA Low" },
-                    { nodeId: "222", fieldName: "strength_model", fieldValue: "1.0000000000000002", description: "Strength LoRA Low" },
-                    { nodeId: "52", fieldName: "text", fieldValue: prompt, description: "Prompt" },
-                    { nodeId: "53", fieldName: "text", fieldValue: NEGATIVE_PROMPT, description: "Negative Prompt" }
+                    { nodeId: "64", fieldName: "lora_name", fieldValue: loraHighInput.value, description: "LoRA High" },
+                    { nodeId: "64", fieldName: "strength_model", fieldValue: strengthHighInput.value, description: "Strength LoRA High" },
+                    { nodeId: "222", fieldName: "lora_name", fieldValue: loraLowInput.value, description: "LoRA Low" },
+                    { nodeId: "222", fieldName: "strength_model", fieldValue: strengthLowInput.value, description: "Strength LoRA Low" },
+                    { nodeId: "52", fieldName: "text", fieldValue: promptInput.value, description: "Prompt" },
+                    { nodeId: "53", fieldName: "text", fieldValue: negativePromptInput.value, description: "Negative Prompt" }
                 ],
                 instanceType: "default",
                 usePersonalQueue: "false"
             };
 
-            log("Submitting complex task to RunningHub...");
             const rhSubmitRes = await fetch(`https://www.runninghub.ai/openapi/v2/run/ai-app/${WORKFLOW_ID}`, {
                 method: 'POST',
                 headers: {
@@ -378,20 +407,15 @@
                 },
                 body: JSON.stringify(payload)
             });
-            
             const rhSubmitData = await rhSubmitRes.json();
-            if (!rhSubmitRes.ok || !rhSubmitData.taskId) {
-                const errorDetail = rhSubmitData.errorMessage || rhSubmitData.message || "Unknown Error";
-                throw new Error(`Submission failed: ${errorDetail}`);
-            }
+            if (!rhSubmitRes.ok || !rhSubmitData.taskId) throw new Error("Submission failed");
             
-            const taskId = rhSubmitData.taskId;
-            log(`Task accepted! ID: ${taskId}`, 'success');
+            log(`Task ID: ${rhSubmitData.taskId}`, 'success');
             setStep('step-submit', 'completed');
 
-            // 3. Status Polling
+            // 3. Polling
             setStep('step-process', 'active');
-            pollStatus(taskId, apiKey);
+            pollStatus(rhSubmitData.taskId, apiKey);
 
         } catch (err) {
             log(err.message, 'error');
@@ -412,21 +436,16 @@
                     },
                     body: JSON.stringify({ taskId: taskId })
                 });
-                
                 const data = await res.json();
-                const status = data.status;
-                log(`Task status: ${status}`);
+                log(`Status: ${data.status}`);
 
-                if (status === 'SUCCESS') {
-                    const videoUrl = data.results[0].url;
-                    log("Generation complete!", 'success');
+                if (data.status === 'SUCCESS') {
                     setStep('step-process', 'completed');
-                    showResult(videoUrl);
+                    showResult(data.results[0].url);
                     break;
-                } else if (status === 'FAILED') {
-                    throw new Error("Generation failed: " + (data.errorMessage || "Workflow error"));
+                } else if (data.status === 'FAILED') {
+                    throw new Error("Generation failed");
                 }
-                
                 await new Promise(r => setTimeout(r, 10000));
             } catch (err) {
                 log(err.message, 'error');
@@ -441,11 +460,10 @@
         outputVideo.src = url;
         const downloadLink = document.getElementById('download-link');
         downloadLink.href = url;
-        const fileName = `wan21_${new Date().getTime()}.mp4`;
-        downloadLink.download = fileName;
+        downloadLink.download = `wan22_${Date.now()}.mp4`;
         resultContainer.style.display = 'block';
         startBtn.disabled = false;
-        log("Video is ready", 'success');
+        log("Ready", 'success');
     }
 </script>
 
