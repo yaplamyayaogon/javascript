@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wan2.2 Video Generator</title>
+    <!-- Подключаем JSZip для работы с архивами кадров -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
             --primary: #00d2ff;
@@ -102,6 +104,11 @@
             cursor: pointer;
             margin-bottom: 20px;
             position: relative;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
         .drop-zone:hover, .drop-zone.dragover {
@@ -109,7 +116,37 @@
             background: rgba(0, 210, 255, 0.05);
         }
 
-        .drop-zone p { margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; }
+        .drop-zone p { 
+            margin: 0; 
+            color: rgba(255, 255, 255, 0.7); 
+            font-size: 0.85rem;
+            z-index: 1;
+            position: relative;
+        }
+
+        .drop-zone .preview-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .drop-zone .preview-img:hover {
+            opacity: 0.8;
+        }
+
+        .drop-zone.has-image p {
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 8px;
+        }
 
         button {
             width: 100%;
@@ -202,6 +239,131 @@
             overflow-y: auto;
             text-align: left;
         }
+        /* Dual dropzone layout */
+        .dropzone-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Progress styles */
+        .progress-wrap {
+            margin-top: 15px;
+            text-align: left;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            color: rgba(255,255,255,0.6);
+        }
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.15s ease;
+        }
+        .progress-fill.green {
+            background: linear-gradient(90deg, #00f260, #059669);
+        }
+
+        /* Player styles */
+        .player-wrap {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 15px;
+        }
+        .canvas-wrap {
+            width: 100%;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 16/9;
+            margin-bottom: 15px;
+        }
+        .canvas-wrap canvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+        .scrubber-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .scrubber {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 99px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+            cursor: pointer;
+        }
+        .scrubber::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.2);
+        }
+        .frame-counter {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            min-width: 60px;
+            text-align: right;
+        }
+        .ctrl-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .ctrl-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: white;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .ctrl-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .ctrl-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .ctrl-btn.play-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 1.2rem;
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
@@ -217,10 +379,21 @@
         </div>
     </div>
 
-    <label>Image</label>
-    <div class="drop-zone" id="drop-zone">
-        <p id="file-info">Click or drag & drop a photo here</p>
-        <input type="file" id="file-input" accept="image/*" style="display: none;">
+    <div class="dropzone-container">
+        <div class="input-group">
+            <label>Source Image</label>
+            <div class="drop-zone" id="drop-zone">
+                <p id="file-info">Click or drag photo here</p>
+                <input type="file" id="file-input" accept="image/*" style="display: none;">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Watermark Image</label>
+            <div class="drop-zone" id="drop-zone-wm">
+                <p id="file-info-wm">Click or drag watermark here</p>
+                <input type="file" id="file-input-wm" accept="image/*" style="display: none;">
+            </div>
+        </div>
     </div>
 
     <div class="input-group">
@@ -257,33 +430,69 @@
 
     <div class="status-panel" id="status-panel">
         <div class="step" id="step-upload">
-            <div class="step-icon">1</div> Uploading image...
+            <div class="step-icon">1</div> Uploading assets...
         </div>
         <div class="step" id="step-submit">
             <div class="step-icon">2</div> Submitting task to <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a>...
         </div>
         <div class="step" id="step-process">
-            <div class="step-icon">3</div> Generating video (5-10 min)...
+            <div class="step-icon">3</div> Running ComfyUI workflow...
+        </div>
+        <div class="step" id="step-zip">
+            <div class="step-icon">4</div> Downloading ZIP archive...
+        </div>
+        <div class="step" id="step-decode">
+            <div class="step-icon">5</div> Decoding frames...
         </div>
     </div>
 
     <div id="result-container">
-        <h3>Result Ready!</h3>
-        <video id="output-video" controls></video>
-        <div style="margin-top: 15px;">
-            <a id="download-link" href="#" download style="color: var(--primary); text-decoration: none;">⬇ Download Video</a>
+        <h3>Result Ready (Decoded)</h3>
+        
+        <div class="player-wrap">
+            <div class="canvas-wrap">
+                <canvas id="previewCanvas"></canvas>
+            </div>
+            
+            <div class="scrubber-wrap">
+                <input type="range" class="scrubber" id="scrubber" min="0" value="0" step="1" disabled />
+                <span class="frame-counter" id="frameCounter">0 / 0</span>
+            </div>
+            
+            <div class="ctrl-row">
+                <button class="ctrl-btn" id="btnFirst" disabled title="First Frame">⏮</button>
+                <button class="ctrl-btn" id="btnPrev" disabled title="Prev Frame">◀</button>
+                <button class="ctrl-btn play-btn" id="btnPlay" disabled title="Play / Pause">▶</button>
+                <button class="ctrl-btn" id="btnNext" disabled title="Next Frame">▶</button>
+                <button class="ctrl-btn" id="btnLast" disabled title="Last Frame">⏭</button>
+            </div>
         </div>
+
+        <div class="progress-wrap">
+            <div class="progress-label">
+                <span>WebM Compile Progress</span>
+                <span id="expPct">—</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill green" id="expFill"></div>
+            </div>
+        </div>
+
+        <button class="btn btn-green" id="btnExport" style="margin-top:15px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;" disabled>
+            <span>⬇</span> Download WebM Video
+        </button>
     </div>
 
     <div class="log-trigger" onclick="toggleLog()">Technical Log</div>
     <div id="console-log"></div>
 </div>
-
 <script>
     // Config
-    const WORKFLOW_ID = "2067040305022595074";
+    const WORKFLOW_ID = "2068017342252146690";
+    const FPS = 16;
+    const FRAME_MS = 1000 / FPS;
 
-    // UI
+    // UI Input
     const apiKeyInput = document.getElementById('api-key');
     const promptInput = document.getElementById('prompt');
     const negativePromptInput = document.getElementById('negative-prompt');
@@ -291,50 +500,126 @@
     const strengthHighInput = document.getElementById('strength-high');
     const loraLowInput = document.getElementById('lora-low');
     const strengthLowInput = document.getElementById('strength-low');
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
     const startBtn = document.getElementById('start-btn');
     const statusPanel = document.getElementById('status-panel');
     const resultContainer = document.getElementById('result-container');
-    const outputVideo = document.getElementById('output-video');
     const consoleLog = document.getElementById('console-log');
 
+    // Dual Dropzones
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const dropZoneWm = document.getElementById('drop-zone-wm');
+    const fileInputWm = document.getElementById('file-input-wm');
+
+    // Player Elements
+    const previewCanvas = document.getElementById('previewCanvas');
+    const ctx = previewCanvas.getContext('2d');
+    const scrubber = document.getElementById('scrubber');
+    const frameCounter = document.getElementById('frameCounter');
+    const btnFirst = document.getElementById('btnFirst');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnNext = document.getElementById('btnNext');
+    const btnLast = document.getElementById('btnLast');
+    
+    // Export Elements
+    const btnExport = document.getElementById('btnExport');
+    const expFill = document.getElementById('expFill');
+    const expPct = document.getElementById('expPct');
+
     let selectedFile = null;
+    let selectedWmFile = null;
+    let decodedFrames = [];
+    let currentFrame = 0;
+    let isPlaying = false;
+    let playTimer = null;
+    let isRecording = false;
 
     // Load API Key
     const savedKey = localStorage.getItem('rh_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
 
-    // Events
+    // Key input save
     apiKeyInput.oninput = () => {
         localStorage.setItem('rh_api_key', apiKeyInput.value);
         validateInputs();
     };
+
     [promptInput, negativePromptInput, loraHighInput, strengthHighInput, loraLowInput, strengthLowInput].forEach(el => {
         el.oninput = validateInputs;
     });
 
+    // Dropzone setup
     dropZone.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => handleFile(e.target.files[0]);
-
+    fileInput.onchange = (e) => handleFile(e.target.files[0], 'src');
     dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
     dropZone.ondragleave = () => dropZone.classList.remove('dragover');
     dropZone.ondrop = (e) => {
         e.preventDefault();
         dropZone.classList.remove('dragover');
-        handleFile(e.dataTransfer.files[0]);
+        handleFile(e.dataTransfer.files[0], 'src');
     };
 
-    function handleFile(file) {
+    dropZoneWm.onclick = () => fileInputWm.click();
+    fileInputWm.onchange = (e) => handleFile(e.target.files[0], 'wm');
+    dropZoneWm.ondragover = (e) => { e.preventDefault(); dropZoneWm.classList.add('dragover'); };
+    dropZoneWm.ondragleave = () => dropZoneWm.classList.remove('dragover');
+    dropZoneWm.ondrop = (e) => {
+        e.preventDefault();
+        dropZoneWm.classList.remove('dragover');
+        handleFile(e.dataTransfer.files[0], 'wm');
+    };
+
+    function handleFile(file, type) {
         if (file && file.type.startsWith('image/')) {
-            selectedFile = file;
-            document.getElementById('file-info').innerText = `File: ${file.name}`;
+            if (type === 'src') {
+                selectedFile = file;
+                const fileInfo = document.getElementById('file-info');
+                
+                // Создаем URL для превью
+                const imgUrl = URL.createObjectURL(file);
+                
+                // Удаляем старое превью если есть
+                const oldPreview = dropZone.querySelector('.preview-img');
+                if (oldPreview) oldPreview.remove();
+                
+                // Создаем элемент изображения для превью
+                const img = document.createElement('img');
+                img.className = 'preview-img';
+                img.src = imgUrl;
+                dropZone.appendChild(img);
+                
+                // Обновляем текст и добавляем класс для стилизации
+                fileInfo.innerText = `✓ ${file.name}`;
+                dropZone.classList.add('has-image');
+                
+            } else {
+                selectedWmFile = file;
+                const fileInfo = document.getElementById('file-info-wm');
+                
+                // Создаем URL для превью
+                const imgUrl = URL.createObjectURL(file);
+                
+                // Удаляем старое превью если есть
+                const oldPreview = dropZoneWm.querySelector('.preview-img');
+                if (oldPreview) oldPreview.remove();
+                
+                // Создаем элемент изображения для превью
+                const img = document.createElement('img');
+                img.className = 'preview-img';
+                img.src = imgUrl;
+                dropZoneWm.appendChild(img);
+                
+                // Обновляем текст и добавляем класс для стилизации
+                fileInfo.innerText = `✓ ${file.name}`;
+                dropZoneWm.classList.add('has-image');
+            }
             validateInputs();
         }
     }
 
     function validateInputs() {
-        startBtn.disabled = !(selectedFile && apiKeyInput.value.length >= 30);
+        startBtn.disabled = !(selectedFile && selectedWmFile && apiKeyInput.value.length >= 30);
     }
 
     function log(msg, type = 'info') {
@@ -358,6 +643,7 @@
         if (status === 'failed') el.querySelector('.step-icon').innerText = '✕';
     }
 
+    // 1. Core workflow execution
     startBtn.onclick = async () => {
         const apiKey = apiKeyInput.value.trim();
         startBtn.disabled = true;
@@ -365,31 +651,25 @@
         resultContainer.style.display = 'none';
         
         try {
-            // 1. Upload
+            // Upload source image and watermark
             setStep('step-upload', 'active');
-            log("Uploading image...");
-            const uploadFormData = new FormData();
-            uploadFormData.append('file', selectedFile);
+            log("Uploading images...");
             
-            const rhUploadRes = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${apiKey}` },
-                body: uploadFormData
-            });
-            const rhUploadData = await rhUploadRes.json();
-            if (rhUploadData.code !== 0) throw new Error("Upload failed: " + rhUploadData.message);
+            const uploadSrc = await uploadToRH(selectedFile, apiKey);
+            log(`Source Image uploaded: ${uploadSrc}`, 'success');
             
-            const imageUrl = rhUploadData.data.download_url;
-            log(`Image uploaded: ${imageUrl}`, 'success');
+            const uploadWm = await uploadToRH(selectedWmFile, apiKey);
+            log(`Watermark uploaded: ${uploadWm}`, 'success');
             setStep('step-upload', 'completed');
 
-            // 2. Submit
+            // Submit task
             setStep('step-submit', 'active');
-            log("Submitting task...");
+            log("Submitting task to workflow...");
             
             const payload = {
                 nodeInfoList: [
-                    { nodeId: "396", fieldName: "image", fieldValue: imageUrl, description: "Image" },
+                    { nodeId: "396", fieldName: "image", fieldValue: uploadSrc, description: "Image" },
+                    { nodeId: "411", fieldName: "image", fieldValue: uploadWm, description: "Watermark Image" },
                     { nodeId: "64", fieldName: "lora_name", fieldValue: loraHighInput.value, description: "LoRA High" },
                     { nodeId: "64", fieldName: "strength_model", fieldValue: strengthHighInput.value, description: "Strength LoRA High" },
                     { nodeId: "222", fieldName: "lora_name", fieldValue: loraLowInput.value, description: "LoRA Low" },
@@ -410,12 +690,12 @@
                 body: JSON.stringify(payload)
             });
             const rhSubmitData = await rhSubmitRes.json();
-            if (!rhSubmitRes.ok || !rhSubmitData.taskId) throw new Error("Submission failed");
+            if (!rhSubmitRes.ok || !rhSubmitData.taskId) throw new Error("Workflow submission failed");
             
             log(`Task ID: ${rhSubmitData.taskId}`, 'success');
             setStep('step-submit', 'completed');
 
-            // 3. Polling
+            // Poll task
             setStep('step-process', 'active');
             pollStatus(rhSubmitData.taskId, apiKey);
 
@@ -425,6 +705,19 @@
             startBtn.disabled = false;
         }
     };
+
+    async function uploadToRH(file, apiKey) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+            body: formData
+        });
+        const data = await res.json();
+        if (data.code !== 0) throw new Error(`Upload ${file.name} failed: ` + data.message);
+        return data.data.download_url;
+    }
 
     async function pollStatus(taskId, apiKey) {
         const queryUrl = "https://www.runninghub.ai/openapi/v2/query";
@@ -443,10 +736,16 @@
 
                 if (data.status === 'SUCCESS') {
                     setStep('step-process', 'completed');
-                    showResult(data.results[0].url);
+                    
+                    // Находим zip-архив в результатах
+                    const zipResult = data.results.find(r => r.outputType === 'zip');
+                    const zipUrl = zipResult ? zipResult.url : data.results[0].url;
+                    
+                    log(`Archive URL found: ${zipUrl}`, 'success');
+                    downloadAndExtract(zipUrl);
                     break;
                 } else if (data.status === 'FAILED') {
-                    throw new Error("Generation failed");
+                    throw new Error("ComfyUI Task execution failed");
                 }
                 await new Promise(r => setTimeout(r, 10000));
             } catch (err) {
@@ -458,15 +757,239 @@
         }
     }
 
-    function showResult(url) {
-        outputVideo.src = url;
-        const downloadLink = document.getElementById('download-link');
-        downloadLink.href = url;
-        downloadLink.download = `wan22_${Date.now()}.mp4`;
-        resultContainer.style.display = 'block';
-        startBtn.disabled = false;
-        log("Ready", 'success');
+    // 2. Download ZIP and extract frames
+    async function downloadAndExtract(zipUrl) {
+        try {
+            setStep('step-zip', 'active');
+            log("Downloading output ZIP archive...");
+            
+            const response = await fetch(zipUrl);
+            const blob = await response.blob();
+            
+            log("Extracting frames with JSZip...");
+            const zip = await JSZip.loadAsync(blob);
+            
+            // Находим все кадры (png)
+            const shotFiles = [];
+            let extractedWmData = null;
+            
+            const filePromises = [];
+            zip.forEach((relativePath, file) => {
+                if (relativePath.endsWith('.png')) {
+                    if (relativePath.includes('watermark')) {
+                        filePromises.push(file.async('blob').then(b => {
+                            extractedWmData = b;
+                        }));
+                    } else if (relativePath.includes('shot_')) {
+                        filePromises.push(file.async('blob').then(b => {
+                            shotFiles.push({ name: relativePath, blob: b });
+                        }));
+                    }
+                }
+            });
+
+            await Promise.all(filePromises);
+            
+            // Сортируем кадры по номеру shot_00001
+            shotFiles.sort((a, b) => {
+                const na = parseInt(a.name.match(/shot_(\d+)/i)[1], 10);
+                const nb = parseInt(b.name.match(/shot_(\d+)/i)[1], 10);
+                return na - nb;
+            });
+
+            log(`Extracted ${shotFiles.length} shots.`, 'success');
+            setStep('step-zip', 'completed');
+
+            // 3. Decoding
+            setStep('step-decode', 'active');
+            log("Decoding frames on CPU...");
+            
+            // Используем присланный водяной знак, либо загруженный пользователем
+            const wmBlob = extractedWmData || selectedWmFile;
+            
+            await decodeAll(shotFiles, wmBlob);
+            
+        } catch (err) {
+            log(err.message, 'error');
+            setStep('step-zip', 'failed');
+            startBtn.disabled = false;
+        }
     }
+
+    // Load Image Blob to ImageData
+    async function loadImageData(blob, targetW, targetH) {
+        const opts = { colorSpaceConversion: 'none', imageOrientation: 'none' };
+        if (targetW && targetH) {
+            opts.resizeWidth = targetW;
+            opts.resizeHeight = targetH;
+            opts.resizeQuality = 'high';
+        }
+        const bitmap = await createImageBitmap(blob, opts);
+        const w = bitmap.width;
+        const h = bitmap.height;
+        const oc = new OffscreenCanvas(w, h);
+        const ox = oc.getContext('2d', { willReadFrequently: true, alpha: false, colorSpace: 'srgb' });
+        ox.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        return { data: ox.getImageData(0, 0, w, h), w, h };
+    }
+
+    async function decodeAll(shotFiles, wmBlob) {
+        try {
+            decodedFrames = [];
+            
+            // Размеры определяем по первому кадру
+            const firstShot = await loadImageData(shotFiles[0].blob);
+            const { w, h } = firstShot;
+            log(`Frame size: ${w}x${h}`);
+
+            // Загружаем watermark (он уже такого же размера 1:1, ресайз не требуется)
+            const wm = await loadImageData(wmBlob, w, h);
+            const wmPix = wm.data.data;
+
+            previewCanvas.width = w;
+            previewCanvas.height = h;
+
+            for (let i = 0; i < shotFiles.length; i++) {
+                const res = i === 0 ? firstShot : await loadImageData(shotFiles[i].blob);
+                const sp = res.data.data;
+
+                // a = Math.round(2 * shot - watermark)
+                for (let p = 0; p < sp.length; p += 4) {
+                    sp[p]   = Math.min(255, Math.max(0, Math.round(2.0 * sp[p]   - wmPix[p])));
+                    sp[p+1] = Math.min(255, Math.max(0, Math.round(2.0 * sp[p+1] - wmPix[p+1])));
+                    sp[p+2] = Math.min(255, Math.max(0, Math.round(2.0 * sp[p+2] - wmPix[p+2])));
+                    sp[p+3] = 255;
+                }
+
+                decodedFrames.push(res.data);
+                if (i % 5 === 0) ctx.putImageData(res.data, 0, 0);
+            }
+
+            log("Decoding completed!", 'success');
+            setStep('step-decode', 'completed');
+            
+            // Show result player
+            showFrame(0);
+            initPlayer();
+            resultContainer.style.display = 'block';
+
+        } catch (err) {
+            log("Decoding error: " + err.message, 'error');
+            setStep('step-decode', 'failed');
+        } finally {
+            startBtn.disabled = false;
+        }
+    }
+
+    // 4. Video Player logic
+    function initPlayer() {
+        const n = decodedFrames.length;
+        scrubber.max = n - 1;
+        scrubber.value = 0;
+        scrubber.disabled = false;
+        btnExport.disabled = false;
+        updateCounter(0);
+        setPlayerBtns(true);
+    }
+
+    function setPlayerBtns(on) {
+        [btnPlay, btnFirst, btnPrev, btnNext, btnLast].forEach(b => b.disabled = !on);
+    }
+
+    function showFrame(idx) {
+        if (!decodedFrames.length) return;
+        idx = Math.max(0, Math.min(idx, decodedFrames.length - 1));
+        currentFrame = idx;
+        scrubber.value = idx;
+        ctx.putImageData(decodedFrames[idx], 0, 0);
+        updateCounter(idx);
+    }
+
+    function updateCounter(idx) {
+        frameCounter.textContent = `${idx + 1} / ${decodedFrames.length}`;
+    }
+
+    btnPlay.onclick = () => isPlaying ? stopPlay() : startPlay();
+    btnFirst.onclick = () => { stopPlay(); showFrame(0); };
+    btnLast.onclick = () => { stopPlay(); showFrame(decodedFrames.length - 1); };
+    btnPrev.onclick = () => { stopPlay(); showFrame(currentFrame - 1); };
+    btnNext.onclick = () => { stopPlay(); showFrame(currentFrame + 1); };
+    scrubber.oninput = (e) => { stopPlay(); showFrame(parseInt(e.target.value, 10)); };
+
+    function startPlay() {
+        isPlaying = true;
+        btnPlay.textContent = '⏸';
+        scheduleNext();
+    }
+
+    function stopPlay() {
+        isPlaying = false;
+        btnPlay.textContent = '▶';
+        if (playTimer) clearTimeout(playTimer);
+    }
+
+    function scheduleNext() {
+        if (!isPlaying) return;
+        showFrame((currentFrame + 1) % decodedFrames.length);
+        playTimer = setTimeout(scheduleNext, FRAME_MS);
+    }
+
+    // 5. Compile WebM Video
+    btnExport.onclick = async () => {
+        if (!decodedFrames.length || isRecording) return;
+        isRecording = true;
+        btnExport.disabled = true;
+        expFill.style.width = '0%';
+        expPct.textContent = '0%';
+
+        log("Compiling WebM video stream...");
+
+        const w = previewCanvas.width;
+        const h = previewCanvas.height;
+        const recCanvas = document.createElement('canvas');
+        recCanvas.width = w;
+        recCanvas.height = h;
+        const recCtx = recCanvas.getContext('2d');
+
+        const mimeType = 'video/webm;codecs=vp9';
+        const stream = recCanvas.captureStream(FPS);
+        const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+        const chunks = [];
+
+        recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+        
+        const done = new Promise(resolve => {
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rh_decoded_${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                log("Video saved!", 'success');
+                isRecording = false;
+                btnExport.disabled = false;
+                expPct.textContent = '100%';
+                resolve();
+            };
+        });
+
+        recorder.start();
+
+        const total = decodedFrames.length;
+        for (let i = 0; i < total; i++) {
+            recCtx.putImageData(decodedFrames[i], 0, 0);
+            await new Promise(r => setTimeout(r, FRAME_MS));
+            const pct = Math.round(((i + 1) / total) * 100);
+            expFill.style.width = pct + '%';
+            expPct.textContent = pct + '%';
+        }
+
+        recorder.stop();
+        await done;
+    };
 </script>
 
 </body>
