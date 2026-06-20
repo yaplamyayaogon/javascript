@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wan2.2 Video Generator</title>
-    <!-- Подключаем JSZip для работы с архивами кадров -->
+    <title>RunningHub - Download & Decode Existing Task</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
@@ -72,7 +71,7 @@
             letter-spacing: 0.05em;
         }
 
-        input[type="text"], textarea {
+        input[type="text"] {
             width: 100%;
             padding: 10px 14px;
             background: rgba(0, 0, 0, 0.3);
@@ -82,70 +81,12 @@
             font-size: 0.95rem;
             box-sizing: border-box;
             transition: all 0.3s ease;
-            font-family: inherit;
         }
 
-        textarea {
-            height: 60px;
-            resize: vertical;
-        }
-
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.1);
-        }
-
-        .drop-zone {
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 20px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin-bottom: 20px;
-            position: relative;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--primary);
-            background: rgba(0, 210, 255, 0.05);
-        }
-
-        .drop-zone p { 
-            margin: 0; 
-            color: rgba(255, 255, 255, 0.7); 
-            font-size: 0.85rem;
-            z-index: 1;
-            position: relative;
-        }
-
-        .drop-zone .preview-img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 16px;
-            opacity: 0.6;
-            transition: opacity 0.3s ease;
-        }
-
-        .drop-zone .preview-img:hover {
-            opacity: 0.8;
-        }
-
-        .drop-zone.has-image p {
-            color: white;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-            background: rgba(0,0,0,0.5);
-            padding: 4px 12px;
-            border-radius: 8px;
         }
 
         button {
@@ -212,12 +153,6 @@
             display: none;
         }
 
-        video {
-            width: 100%;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
         .log-trigger {
             margin-top: 20px;
             font-size: 0.8rem;
@@ -235,45 +170,9 @@
             font-family: 'Courier New', monospace;
             font-size: 0.75rem;
             border-radius: 8px;
-            max-height: 150px;
+            max-height: 200px;
             overflow-y: auto;
             text-align: left;
-        }
-        /* Dual dropzone layout */
-        .dropzone-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        /* Progress styles */
-        .progress-wrap {
-            margin-top: 15px;
-            text-align: left;
-        }
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            margin-bottom: 5px;
-            color: rgba(255,255,255,0.6);
-        }
-        .progress-bar {
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 99px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            border-radius: 99px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transition: width 0.15s ease;
-        }
-        .progress-fill.green {
-            background: linear-gradient(90deg, #00f260, #059669);
         }
 
         /* Player styles */
@@ -364,12 +263,42 @@
             font-size: 1.2rem;
             border-radius: 50%;
         }
+
+        /* Progress styles */
+        .progress-wrap {
+            margin-top: 15px;
+            text-align: left;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            color: rgba(255,255,255,0.6);
+        }
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.15s ease;
+        }
+        .progress-fill.green {
+            background: linear-gradient(90deg, #00f260, #059669);
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Wan2.2 Generator</h1>
+    <h1>Download & Decode Task</h1>
+    <p class="subtitle">Download already generated frames from <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: var(--primary);">RunningHub</a> and decode watermark</p>
 
     <div class="input-group">
         <label for="api-key"><a href="https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a> API Key</label>
@@ -379,70 +308,22 @@
         </div>
     </div>
 
-    <div class="dropzone-container">
-        <div class="input-group">
-            <label>Source Image</label>
-            <div class="drop-zone" id="drop-zone">
-                <p id="file-info">Click or drag photo here</p>
-                <input type="file" id="file-input" accept="image/*" style="display: none;">
-            </div>
-        </div>
-        <div class="input-group">
-            <label>Watermark Image</label>
-            <div class="drop-zone" id="drop-zone-wm">
-                <p id="file-info-wm">Click or drag watermark here</p>
-                <input type="file" id="file-input-wm" accept="image/*" style="display: none;">
-            </div>
-        </div>
-    </div>
-
     <div class="input-group">
-        <label for="lora-high">LoRA High</label>
-        <input type="text" id="lora-high" value="POVcloseMoment_high.safetensors">
+        <label for="task-id">Task ID (from previous generation)</label>
+        <input type="text" id="task-id" placeholder="e.g., 2068413266178297857">
     </div>
 
-    <div class="input-group">
-        <label for="strength-high">Strength LoRA High</label>
-        <input type="text" id="strength-high" value="1.0000000000000002">
-    </div>
-
-    <div class="input-group">
-        <label for="lora-low">LoRA Low</label>
-        <input type="text" id="lora-low" value="POVcloseMoment_low.safetensors">
-    </div>
-
-    <div class="input-group">
-        <label for="strength-low">Strength LoRA Low</label>
-        <input type="text" id="strength-low" value="1.0000000000000002">
-    </div>
-
-    <div class="input-group">
-        <label for="prompt">Prompt</label>
-        <textarea id="prompt" placeholder="Enter your video description..."></textarea>
-    </div>
-
-    <div class="input-group">
-        <label for="negative-prompt">Negative Prompt</label>
-        <textarea id="negative-prompt">色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走</textarea>
-    </div>
-
-    <button id="start-btn" disabled>Generate Video</button>
+    <button id="start-btn" disabled>Download & Decode</button>
 
     <div class="status-panel" id="status-panel">
-        <div class="step" id="step-upload">
-            <div class="step-icon">1</div> Uploading assets...
+        <div class="step" id="step-query">
+            <div class="step-icon">1</div> Querying task status...
         </div>
-        <div class="step" id="step-submit">
-            <div class="step-icon">2</div> Submitting task to <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a>...
-        </div>
-        <div class="step" id="step-process">
-            <div class="step-icon">3</div> Running ComfyUI workflow...
-        </div>
-        <div class="step" id="step-zip">
-            <div class="step-icon">4</div> Downloading ZIP archive...
+        <div class="step" id="step-download">
+            <div class="step-icon">2</div> Downloading frames...
         </div>
         <div class="step" id="step-decode">
-            <div class="step-icon">5</div> Decoding frames...
+            <div class="step-icon">3</div> Decoding frames...
         </div>
     </div>
 
@@ -486,30 +367,19 @@
     <div class="log-trigger" onclick="toggleLog()">Technical Log</div>
     <div id="console-log"></div>
 </div>
+
 <script>
     // Config
-    const WORKFLOW_ID = "2068017342252146690";
     const FPS = 16;
     const FRAME_MS = 1000 / FPS;
 
-    // UI Input
+    // UI Elements
     const apiKeyInput = document.getElementById('api-key');
-    const promptInput = document.getElementById('prompt');
-    const negativePromptInput = document.getElementById('negative-prompt');
-    const loraHighInput = document.getElementById('lora-high');
-    const strengthHighInput = document.getElementById('strength-high');
-    const loraLowInput = document.getElementById('lora-low');
-    const strengthLowInput = document.getElementById('strength-low');
+    const taskIdInput = document.getElementById('task-id');
     const startBtn = document.getElementById('start-btn');
     const statusPanel = document.getElementById('status-panel');
     const resultContainer = document.getElementById('result-container');
     const consoleLog = document.getElementById('console-log');
-
-    // Dual Dropzones
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const dropZoneWm = document.getElementById('drop-zone-wm');
-    const fileInputWm = document.getElementById('file-input-wm');
 
     // Player Elements
     const previewCanvas = document.getElementById('previewCanvas');
@@ -527,99 +397,26 @@
     const expFill = document.getElementById('expFill');
     const expPct = document.getElementById('expPct');
 
-    let selectedFile = null;
-    let selectedWmFile = null;
     let decodedFrames = [];
     let currentFrame = 0;
     let isPlaying = false;
     let playTimer = null;
     let isRecording = false;
 
-    // Load API Key
+    // Load API Key from localStorage
     const savedKey = localStorage.getItem('rh_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
 
-    // Key input save
+    // Save API Key on change
     apiKeyInput.oninput = () => {
         localStorage.setItem('rh_api_key', apiKeyInput.value);
         validateInputs();
     };
 
-    [promptInput, negativePromptInput, loraHighInput, strengthHighInput, loraLowInput, strengthLowInput].forEach(el => {
-        el.oninput = validateInputs;
-    });
-
-    // Dropzone setup
-    dropZone.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => handleFile(e.target.files[0], 'src');
-    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-    dropZone.ondrop = (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        handleFile(e.dataTransfer.files[0], 'src');
-    };
-
-    dropZoneWm.onclick = () => fileInputWm.click();
-    fileInputWm.onchange = (e) => handleFile(e.target.files[0], 'wm');
-    dropZoneWm.ondragover = (e) => { e.preventDefault(); dropZoneWm.classList.add('dragover'); };
-    dropZoneWm.ondragleave = () => dropZoneWm.classList.remove('dragover');
-    dropZoneWm.ondrop = (e) => {
-        e.preventDefault();
-        dropZoneWm.classList.remove('dragover');
-        handleFile(e.dataTransfer.files[0], 'wm');
-    };
-
-    function handleFile(file, type) {
-        if (file && file.type.startsWith('image/')) {
-            if (type === 'src') {
-                selectedFile = file;
-                const fileInfo = document.getElementById('file-info');
-                
-                // Создаем URL для превью
-                const imgUrl = URL.createObjectURL(file);
-                
-                // Удаляем старое превью если есть
-                const oldPreview = dropZone.querySelector('.preview-img');
-                if (oldPreview) oldPreview.remove();
-                
-                // Создаем элемент изображения для превью
-                const img = document.createElement('img');
-                img.className = 'preview-img';
-                img.src = imgUrl;
-                dropZone.appendChild(img);
-                
-                // Обновляем текст и добавляем класс для стилизации
-                fileInfo.innerText = `✓ ${file.name}`;
-                dropZone.classList.add('has-image');
-                
-            } else {
-                selectedWmFile = file;
-                const fileInfo = document.getElementById('file-info-wm');
-                
-                // Создаем URL для превью
-                const imgUrl = URL.createObjectURL(file);
-                
-                // Удаляем старое превью если есть
-                const oldPreview = dropZoneWm.querySelector('.preview-img');
-                if (oldPreview) oldPreview.remove();
-                
-                // Создаем элемент изображения для превью
-                const img = document.createElement('img');
-                img.className = 'preview-img';
-                img.src = imgUrl;
-                dropZoneWm.appendChild(img);
-                
-                // Обновляем текст и добавляем класс для стилизации
-                fileInfo.innerText = `✓ ${file.name}`;
-                dropZoneWm.classList.add('has-image');
-            }
-            validateInputs();
-        }
-    }
+    taskIdInput.oninput = validateInputs;
 
     function validateInputs() {
-        startBtn.disabled = !(selectedFile && selectedWmFile && apiKeyInput.value.length >= 30);
+        startBtn.disabled = !(apiKeyInput.value.length >= 30 && taskIdInput.value.trim().length > 0);
     }
 
     function log(msg, type = 'info') {
@@ -643,148 +440,89 @@
         if (status === 'failed') el.querySelector('.step-icon').innerText = '✕';
     }
 
-    // 1. Core workflow execution
+    // Main execution
     startBtn.onclick = async () => {
         const apiKey = apiKeyInput.value.trim();
+        const taskId = taskIdInput.value.trim();
+        
         startBtn.disabled = true;
         statusPanel.style.display = 'block';
         resultContainer.style.display = 'none';
         
         try {
-            // Upload source image and watermark
-            setStep('step-upload', 'active');
-            log("Uploading images...");
+            // Step 1: Query task
+            setStep('step-query', 'active');
+            log("Querying task status...");
             
-            const uploadSrc = await uploadToRH(selectedFile, apiKey);
-            log(`Source Image uploaded: ${uploadSrc}`, 'success');
-            
-            const uploadWm = await uploadToRH(selectedWmFile, apiKey);
-            log(`Watermark uploaded: ${uploadWm}`, 'success');
-            setStep('step-upload', 'completed');
-
-            // Submit task
-            setStep('step-submit', 'active');
-            log("Submitting task to workflow...");
-            
-            const payload = {
-                nodeInfoList: [
-                    { nodeId: "396", fieldName: "image", fieldValue: uploadSrc, description: "Image" },
-                    { nodeId: "411", fieldName: "image", fieldValue: uploadWm, description: "Watermark Image" },
-                    { nodeId: "64", fieldName: "lora_name", fieldValue: loraHighInput.value, description: "LoRA High" },
-                    { nodeId: "64", fieldName: "strength_model", fieldValue: strengthHighInput.value, description: "Strength LoRA High" },
-                    { nodeId: "222", fieldName: "lora_name", fieldValue: loraLowInput.value, description: "LoRA Low" },
-                    { nodeId: "222", fieldName: "strength_model", fieldValue: strengthLowInput.value, description: "Strength LoRA Low" },
-                    { nodeId: "52", fieldName: "text", fieldValue: promptInput.value, description: "Prompt" },
-                    { nodeId: "53", fieldName: "text", fieldValue: negativePromptInput.value, description: "Negative Prompt" }
-                ],
-                instanceType: "default",
-                usePersonalQueue: "false"
-            };
-
-            const rhSubmitRes = await fetch(`https://www.runninghub.ai/openapi/v2/run/ai-app/${WORKFLOW_ID}`, {
+            const queryResponse = await fetch('https://www.runninghub.ai/openapi/v2/query', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${apiKey}`
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ taskId: taskId })
             });
-            const rhSubmitData = await rhSubmitRes.json();
-            if (!rhSubmitRes.ok || !rhSubmitData.taskId) throw new Error("Workflow submission failed");
             
-            log(`Task ID: ${rhSubmitData.taskId}`, 'success');
-            setStep('step-submit', 'completed');
-
-            // Poll task
-            setStep('step-process', 'active');
-            pollStatus(rhSubmitData.taskId, apiKey);
-
-        } catch (err) {
-            log(err.message, 'error');
-            alert(err.message);
-            startBtn.disabled = false;
-        }
-    };
-
-    async function uploadToRH(file, apiKey) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${apiKey}` },
-            body: formData
-        });
-        const data = await res.json();
-        if (data.code !== 0) throw new Error(`Upload ${file.name} failed: ` + data.message);
-        return data.data.download_url;
-    }
-
-    async function pollStatus(taskId, apiKey) {
-        const queryUrl = "https://www.runninghub.ai/openapi/v2/query";
-        while (true) {
-            try {
-                const res = await fetch(queryUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({ taskId: taskId })
-                });
-                const data = await res.json();
-                log(`Status: ${data.status}`);
-
-                if (data.status === 'SUCCESS') {
-                    setStep('step-process', 'completed');
-                    
-                    // Выводим первые 3 URL полностью для отладки
-                    log(`Results: ${data.results.length} files`, 'success');
-                    for (let i = 0; i < Math.min(3, data.results.length); i++) {
-                        log(`Result[${i}]: ${data.results[i].url}`, 'info');
-                    }
-                    
-                    // Разделяем по nodeId: 422 = watermark, 421 = кадры
-                    const wmResult = data.results.find(r => r.nodeId === '422');
-                    const shotResults = data.results.filter(r => r.nodeId === '421');
-                    
-                    log(`Found by nodeId: ${shotResults.length} shots (nodeId=421) + ${wmResult ? '1 watermark (nodeId=422)' : 'NO WATERMARK'}`, 'success');
-                    
-                    if (shotResults.length === 0) {
-                        throw new Error('No shot frames found. Check log for URL structure.');
-                    }
-                    
-                    if (!wmResult) {
-                        throw new Error('No watermark found. Cannot decode without watermark.');
-                    }
-                    
-                    // Сортируем кадры по порядку в массиве (уже отсортированы сервером)
-                    // shotResults уже в правильном порядке
-                    
-                    downloadFrames(shotResults, wmResult);
-                    break;
-                } else if (data.status === 'FAILED') {
-                    throw new Error("ComfyUI Task execution failed");
-                }
-                await new Promise(r => setTimeout(r, 10000));
-            } catch (err) {
-                log(err.message, 'error');
-                setStep('step-process', 'failed');
-                startBtn.disabled = false;
-                break;
+            const data = await queryResponse.json();
+            
+            if (!queryResponse.ok) {
+                throw new Error(`Query failed: ${data.errorMessage || 'Unknown error'}`);
             }
-        }
-    }
-
-    // 2. Download all frames and watermark
-    async function downloadFrames(shotResults, wmResult) {
-        try {
-            setStep('step-zip', 'active');
-            document.getElementById('file-info').innerText = `Downloading ${shotResults.length} frames...`;
             
+            if (data.status !== 'SUCCESS') {
+                throw new Error(`Task status is ${data.status}, not SUCCESS. Wait for completion.`);
+            }
+            
+            log(`Task status: SUCCESS`, 'success');
+            log(`Results: ${data.results.length} files`, 'success');
+            
+            // Выводим первые 3 и последний URL полностью для отладки
+            for (let i = 0; i < Math.min(3, data.results.length); i++) {
+                log(`Result[${i}]: ${data.results[i].url}`, 'info');
+            }
+            if (data.results.length > 3) {
+                log(`Result[${data.results.length - 1}]: ${data.results[data.results.length - 1].url}`, 'info');
+            }
+            
+            setStep('step-query', 'completed');
+
+            // Разделяем по nodeId: 422 = watermark, 421 = кадры
+            const wmResult = data.results.find(r => r.nodeId === '422');
+            const shotResults = data.results.filter(r => r.nodeId === '421');
+            
+            log(`Found by nodeId: ${shotResults.length} shots (nodeId=421) + ${wmResult ? '1 watermark (nodeId=422)' : 'NO WATERMARK'}`, 'success');
+            
+            // Альтернатива: если nodeId другие, ищем по первому элементу (watermark) и остальным (кадры)
+            if (!wmResult || shotResults.length === 0) {
+                log('nodeId method failed, trying index-based detection...', 'info');
+                // Первый файл = watermark, остальные = кадры
+                const wmByIndex = data.results[0];
+                const shotsByIndex = data.results.slice(1);
+                log(`Index-based: ${shotsByIndex.length} shots + 1 watermark`, 'info');
+                
+                // Используем этот метод
+                shotResults.push(...shotsByIndex);
+                if (!wmResult) {
+                    data.results.unshift(wmByIndex);
+                }
+            }
+            
+            if (shotResults.length === 0) {
+                throw new Error('No shot frames found in results. Check task ID.');
+            }
+            
+            if (!wmResult) {
+                throw new Error('No watermark found in results. Cannot decode without watermark.');
+            }
+
+            // Кадры уже отсортированы сервером по порядку в массиве
+            log(`Starting download of ${shotResults.length} frames...`, 'info');
+
+            // Step 2: Download frames
+            setStep('step-download', 'active');
             const shotBlobs = [];
             const total = shotResults.length;
             
-            // Скачиваем все кадры параллельно (пакетами по 10 для CORS)
             for (let i = 0; i < total; i += 10) {
                 const batch = shotResults.slice(i, Math.min(i + 10, total));
                 const batchPromises = batch.map(async (r) => {
@@ -800,14 +538,14 @@
             
             log(`All ${shotResults.length} frames downloaded`, 'success');
             
-            // Скачиваем водяной знак
+            // Download watermark
             log("Downloading watermark...");
             const wmRes = await fetch(wmResult.url);
             const wmBlob = await wmRes.blob();
             
-            setStep('step-zip', 'completed');
+            setStep('step-download', 'completed');
 
-            // 3. Decoding
+            // Step 3: Decode
             setStep('step-decode', 'active');
             log("Decoding frames on CPU...");
             
@@ -815,10 +553,10 @@
             
         } catch (err) {
             log(err.message, 'error');
-            setStep('step-zip', 'failed');
+            setStep('step-query', 'failed');
             startBtn.disabled = false;
         }
-    }
+    };
 
     // Load Image Blob to ImageData
     async function loadImageData(blob, targetW, targetH) {
@@ -842,12 +580,10 @@
         try {
             decodedFrames = [];
             
-            // Размеры определяем по первому кадру
             const firstShot = await loadImageData(shotBlobs[0]);
             const { w, h } = firstShot;
             log(`Frame size: ${w}x${h}`);
 
-            // Загружаем watermark (он уже такого же размера 1:1, ресайз не требуется)
             const wm = await loadImageData(wmBlob, w, h);
             const wmPix = wm.data.data;
 
@@ -858,7 +594,7 @@
                 const res = i === 0 ? firstShot : await loadImageData(shotBlobs[i]);
                 const sp = res.data.data;
 
-                // a = Math.round(2 * shot - watermark)
+                // Decode formula: a = Math.round(2 * shot - watermark)
                 for (let p = 0; p < sp.length; p += 4) {
                     sp[p]   = Math.min(255, Math.max(0, Math.round(2.0 * sp[p]   - wmPix[p])));
                     sp[p+1] = Math.min(255, Math.max(0, Math.round(2.0 * sp[p+1] - wmPix[p+1])));
@@ -873,7 +609,6 @@
             log("Decoding completed!", 'success');
             setStep('step-decode', 'completed');
             
-            // Show result player
             showFrame(0);
             initPlayer();
             resultContainer.style.display = 'block';
@@ -886,7 +621,7 @@
         }
     }
 
-    // 4. Video Player logic
+    // Player logic
     function initPlayer() {
         const n = decodedFrames.length;
         scrubber.max = n - 1;
@@ -939,7 +674,7 @@
         playTimer = setTimeout(scheduleNext, FRAME_MS);
     }
 
-    // 5. Compile WebM Video
+    // Compile WebM Video
     btnExport.onclick = async () => {
         if (!decodedFrames.length || isRecording) return;
         isRecording = true;
@@ -970,17 +705,19 @@
         } else {
             throw new Error('No supported video codec found. Try Chrome or Firefox.');
         }
-
+        
         const stream = recCanvas.captureStream(FPS);
         const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
         const chunks = [];
         
         let dataAvailableCount = 0;
+        let lastDataTime = 0;
 
         recorder.ondataavailable = e => { 
             if (e.data.size > 0) {
                 chunks.push(e.data);
                 dataAvailableCount++;
+                lastDataTime = Date.now();
                 log(`Data chunk ${dataAvailableCount}: ${e.data.size} bytes`, 'info');
             }
         };
