@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Video Decoder</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --primary: #58a6ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --error: #f85149;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .subtitle {
+            color: #8b949e;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .subtitle a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Dropzone */
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 24px;
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--primary);
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .dropzone-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .dropzone-text {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .dropzone-hint {
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+
+        /* File info */
+        .file-info {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .file-info.visible {
+            display: block;
+        }
+
+        .file-info h3 {
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .file-info-list {
+            font-size: 0.85rem;
+            color: #8b949e;
+            line-height: 1.6;
+        }
+
+        .file-info-list span {
+            color: var(--success);
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--border);
+            border-color: var(--primary);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        button.primary:hover:not(:disabled) {
+            background: #79c0ff;
+        }
+
+        /* Progress */
+        .progress-container {
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .progress-container.visible {
+            display: block;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: #8b949e;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Canvas */
+        .canvas-container {
+            display: none;
+            margin-bottom: 24px;
+        }
+
+        .canvas-container.visible {
+            display: block;
+        }
+
+        canvas {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #000;
+        }
+
+        .canvas-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .canvas-controls button {
+            padding: 8px 14px;
+        }
+
+        .frame-counter {
+            font-size: 0.85rem;
+            color: #8b949e;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .scrubber {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .scrubber::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Log */
+        .log-container {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 2px;
+        }
+
+        .log-info { color: #8b949e; }
+        .log-success { color: var(--success); }
+        .log-warning { color: var(--warning); }
+        .log-error { color: var(--error); }
+
+        /* Export progress */
+        .export-progress {
+            margin-top: 12px;
+            display: none;
+        }
+
+        .export-progress.visible {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .btn-group { flex-direction: column; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Local Video Decoder</h1>
+        <p class="subtitle">Decode local frames and watermark into video — no API needed</p>
+
+        <!-- Dropzone -->
+        <div class="dropzone" id="dropzone">
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-text">Drop ZIP, Folder, or PNG files here</div>
+            <div class="dropzone-hint">Or click to browse</div>
+        </div>
+        <input type="file" id="file-input" multiple style="display: none;" accept=".zip,.png,.jpg,.jpeg">
+        <input type="file" id="folder-input" webkitdirectory style="display: none;">
+
+        <!-- File Info -->
+        <div class="file-info" id="file-info">
+            <h3>📋 Loaded Files</h3>
+            <div class="file-info-list" id="file-info-list"></div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="btn-group">
+            <button id="btn-decode-all" class="primary" disabled>Decode All Frames</button>
+            <button id="btn-preview" disabled>Preview Frames</button>
+            <button id="btn-export" disabled>Compile WebM</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-container" id="progress-container">
+            <div class="progress-label">
+                <span id="progress-text">Processing...</span>
+                <span id="progress-pct">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Canvas Player -->
+        <div class="canvas-container" id="canvas-container">
+            <canvas id="preview-canvas"></canvas>
+            <div class="canvas-controls">
+                <button id="btn-prev">◀</button>
+                <button id="btn-play">▶ Play</button>
+                <button id="btn-next">▶</button>
+                <span class="frame-counter" id="frame-counter">0 / 0</span>
+                <input type="range" class="scrubber" id="scrubber" min="0" max="0" value="0">
+            </div>
+        </div>
+
+        <!-- Export Progress -->
+        <div class="export-progress" id="export-progress">
+            <div class="progress-label">
+                <span id="exp-text">Compiling...</span>
+                <span id="exp-pct">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="exp-fill"></div>
+            </div>
+        </div>
+
+        <!-- Log -->
+        <div class="log-container" id="log-container"></div>
+    </div>
+
+    <script>
+        // State
+    let watermarkBlob = null;
+    let shotBlobs = [];
+    let decodedFrames = [];
+    let isPlaying = false;
+    let playInterval = null;
+    let currentFrame = 0;
+    let FPS = 16;
+    let FRAME_MS = 1000 / FPS;
+
+    // Elements
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const folderInput = document.getElementById('folder-input');
+    const fileInfo = document.getElementById('file-info');
+    const fileInfoList = document.getElementById('file-info-list');
+    const btnDecodeAll = document.getElementById('btn-decode-all');
+    const btnPreview = document.getElementById('btn-preview');
+    const btnExport = document.getElementById('btn-export');
+    const progressContainer = document.getElementById('progress-container');
+    const progressText = document.getElementById('progress-text');
+    const progressPct = document.getElementById('progress-pct');
+    const progressFill = document.getElementById('progress-fill');
+    const canvasContainer = document.getElementById('canvas-container');
+    const previewCanvas = document.getElementById('preview-canvas');
+    const ctx = previewCanvas.getContext('2d');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnPlay = document.getElementById('btn-play');
+    const btnNext = document.getElementById('btn-next');
+    const frameCounter = document.getElementById('frame-counter');
+    const scrubber = document.getElementById('scrubber');
+    const exportProgress = document.getElementById('export-progress');
+    const expText = document.getElementById('exp-text');
+    const expPct = document.getElementById('exp-pct');
+    const expFill = document.getElementById('exp-fill');
+    const logContainer = document.getElementById('log-container');
+
+    // Load image as ImageData (like wan22-16fps-8sec.html)
+    function loadImageData(blob) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const c = canvas.getContext('2d');
+                c.drawImage(img, 0, 0);
+                URL.revokeObjectURL(img.src);
+                resolve({ data: c.getImageData(0, 0, img.width, img.height), w: img.width, h: img.height });
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(img.src);
+                reject(new Error('Failed to load image'));
+            };
+            img.src = URL.createObjectURL(blob);
+        });
+    }
+
+    // Log
+    function log(msg, type = 'info') {
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+        // Dropzone events
+        dropzone.addEventListener('click', () => {
+            // Check if it's a folder or file input
+            const isFolder = confirm('Select a FOLDER?\n\nOK = Folder\nCancel = Files/ZIP');
+            if (isFolder) {
+                folderInput.click();
+            } else {
+                fileInput.click();
+            }
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const items = e.dataTransfer.items;
+            const files = [];
+            
+            // Check for folder entries
+            for (let i = 0; i < items.length; i++) {
+                const entry = items[i].webkitGetAsEntry?.();
+                if (entry) {
+                    readEntry(entry, files);
+                }
+            }
+
+            if (files.length === 0) {
+                // Fallback to files
+                for (const file of e.dataTransfer.files) {
+                    files.push(file);
+                }
+            }
+
+            processFiles(files);
+        });
+
+        // Recursively read directory entries
+        function readEntry(entry, files) {
+            return new Promise((resolve) => {
+                if (entry.isFile) {
+                    entry.file((file) => {
+                        files.push(file);
+                        resolve();
+                    });
+                } else if (entry.isDirectory) {
+                    const reader = entry.createReader();
+                    reader.readEntries((entries) => {
+                        Promise.all(entries.map(e => readEntry(e, files))).then(resolve);
+                    });
+                } else {
+                    resolve();
+                }
+            });
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            processFiles(Array.from(e.target.files));
+        });
+
+        folderInput.addEventListener('change', (e) => {
+            processFiles(Array.from(e.target.files));
+        });
+
+        // Process loaded files
+        async function processFiles(files) {
+            log(`Loading ${files.length} file(s)...`, 'info');
+
+            // Reset state
+            watermarkBlob = null;
+            shotBlobs = [];
+            decodedFrames = [];
+            currentFrame = 0;
+
+            // Check if single ZIP
+            const zipFiles = files.filter(f => f.name.endsWith('.zip'));
+            if (zipFiles.length === 1) {
+                log('ZIP detected, extracting...', 'info');
+                await extractZip(zipFiles[0]);
+            } else {
+                // Try to find watermark and shots by name
+                const pngFiles = files.filter(f => /\.(png|jpg|jpeg)$/i.test(f.name));
+                
+                // Sort by name (should be chronological)
+                pngFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+                // First file is likely watermark, rest are shots
+                if (pngFiles.length > 1) {
+                    watermarkBlob = pngFiles[0];
+                    shotBlobs = pngFiles.slice(1);
+                    log(`Found: 1 watermark + ${shotBlobs.length} shots`, 'success');
+                } else if (pngFiles.length === 1) {
+                    log('Only 1 image found. Need watermark + frames.', 'error');
+                    return;
+                }
+            }
+
+            // Show file info
+            showFileInfo(files.length);
+            
+            // Enable buttons
+            btnDecodeAll.disabled = false;
+            btnPreview.disabled = true;
+            btnExport.disabled = true;
+
+            log(`Ready: ${shotBlobs.length} shots, ${watermarkBlob ? '1 watermark' : 'NO watermark'}`, watermarkBlob ? 'success' : 'error');
+        }
+
+        async function extractZip(zipFile) {
+            // Dynamically load JSZip
+            if (!window.JSZip) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                document.head.appendChild(script);
+                await new Promise(resolve => script.onload = resolve);
+            }
+
+            try {
+                const zip = await JSZip.loadAsync(zipFile);
+                const allFiles = [];
+
+                for (const [name, file] of Object.entries(zip.files)) {
+                    if (!file.dir && /\.(png|jpg|jpeg)$/i.test(name)) {
+                        const blob = await file.async('blob');
+                        allFiles.push({ name, blob });
+                    }
+                }
+
+                allFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+                // Find watermark and shots
+                const watermarkFiles = allFiles.filter(f => /watermark|wm|first_frame/i.test(f.name));
+                const shotFiles = allFiles.filter(f => /shot|frame|output/i.test(f.name));
+
+                if (watermarkFiles.length > 0 && shotFiles.length > 0) {
+                    watermarkBlob = watermarkFiles[0].blob;
+                    shotBlobs = shotFiles.map(f => f.blob);
+                    log(`Extracted: ${shotFiles.length} shots + ${watermarkFiles.length} watermarks`, 'success');
+                } else {
+                    // Fallback: first = watermark, rest = shots
+                    if (allFiles.length > 1) {
+                        watermarkBlob = allFiles[0].blob;
+                        shotBlobs = allFiles.slice(1).map(f => f.blob);
+                        log(`Fallback: ${shotBlobs.length} shots + 1 watermark`, 'warning');
+                    }
+                }
+            } catch (err) {
+                log(`ZIP extract error: ${err.message}`, 'error');
+                throw err;
+            }
+        }
+
+        function showFileInfo(totalFiles) {
+            fileInfo.classList.add('visible');
+            fileInfoList.innerHTML = `
+                Total loaded: <span>${totalFiles}</span><br>
+                Watermark: <span>${watermarkBlob ? 'YES (1 file)' : 'NO'}</span><br>
+                Shots: <span>${shotBlobs.length} frames</span>
+            `;
+        }
+
+        // Decode all frames
+        btnDecodeAll.addEventListener('click', async () => {
+            if (!watermarkBlob || shotBlobs.length === 0) {
+                log('No watermark or shots loaded!', 'error');
+                return;
+            }
+
+            log('Decoding frames...', 'info');
+            progressContainer.classList.add('visible');
+            progressText.textContent = 'Decoding...';
+            btnDecodeAll.disabled = true;
+
+            // Load watermark as ImageData
+            const wmRes = await loadImageData(watermarkBlob);
+            const wmPix = wmRes.data.data;
+            const w = wmRes.w;
+            const h = wmRes.h;
+            log(`Frame size: ${w}x${h}`, 'info');
+
+            // Load first shot
+            const firstShotRes = await loadImageData(shotBlobs[0]);
+            if (firstShotRes.w !== w || firstShotRes.h !== h) {
+                log(`Warning: First shot size ${firstShotRes.w}x${firstShotRes.h} differs from watermark ${w}x${h}`, 'warning');
+            }
+
+            previewCanvas.width = w;
+            previewCanvas.height = h;
+            decodedFrames = [];
+
+            for (let i = 0; i < shotBlobs.length; i++) {
+                const res = (i === 0 ? firstShotRes : await loadImageData(shotBlobs[i]));
+                const sp = res.data.data;
+
+                // a = Math.round(2 * shot - watermark) — same as wan22-16fps-8sec.html
+                for (let p = 0; p < sp.length; p += 4) {
+                    sp[p]     = Math.min(255, Math.max(0, Math.round(2.0 * sp[p]     - wmPix[p])));
+                    sp[p + 1] = Math.min(255, Math.max(0, Math.round(2.0 * sp[p + 1] - wmPix[p + 1])));
+                    sp[p + 2] = Math.min(255, Math.max(0, Math.round(2.0 * sp[p + 2] - wmPix[p + 2])));
+                    sp[p + 3] = 255;
+                }
+
+                // Push ImageData object (not Uint8ClampedArray) — same as wan22-16fps-8sec.html
+                decodedFrames.push(res.data);
+
+                // Show first frame preview
+                if (i === 0) {
+                    ctx.putImageData(res.data, 0, 0);
+                }
+
+                const pct = Math.round(((i + 1) / shotBlobs.length) * 100);
+                progressFill.style.width = pct + '%';
+                progressPct.textContent = pct + '%';
+
+                if (i % 10 === 0) {
+                    log(`Decoding: ${pct}%`, 'info');
+                }
+            }
+
+            progressText.textContent = 'Decoding completed!';
+            progressFill.style.width = '100%';
+            progressPct.textContent = '100%';
+
+            log(`Decoded ${decodedFrames.length} frames (${w}x${h})`, 'success');
+
+            // Enable preview and export
+            btnPreview.disabled = false;
+            btnExport.disabled = false;
+            btnDecodeAll.disabled = false;
+        });
+
+        // Preview frames
+        btnPreview.addEventListener('click', () => {
+            if (decodedFrames.length === 0) {
+                log('No decoded frames! Click "Decode All" first.', 'error');
+                return;
+            }
+
+            canvasContainer.classList.add('visible');
+            previewCanvas.width = decodedFrames[0].width;
+            previewCanvas.height = decodedFrames[0].height;
+            ctx.putImageData(decodedFrames[0], 0, 0);
+
+            scrubber.max = decodedFrames.length - 1;
+            scrubber.value = 0;
+            currentFrame = 0;
+            updateFrameCounter();
+
+            log('Preview mode activated', 'info');
+        });
+
+        btnPrev.addEventListener('click', () => {
+            if (currentFrame > 0) {
+                currentFrame--;
+                scrubber.value = currentFrame;
+                ctx.putImageData(decodedFrames[currentFrame], 0, 0);
+                updateFrameCounter();
+            }
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (currentFrame < decodedFrames.length - 1) {
+                currentFrame++;
+                scrubber.value = currentFrame;
+                ctx.putImageData(decodedFrames[currentFrame], 0, 0);
+                updateFrameCounter();
+            }
+        });
+
+        btnPlay.addEventListener('click', () => {
+            if (isPlaying) {
+                stopPlaying();
+            } else {
+                startPlaying();
+            }
+        });
+
+        function startPlaying() {
+            isPlaying = true;
+            btnPlay.textContent = '⏸ Pause';
+            playInterval = setInterval(() => {
+                if (currentFrame < decodedFrames.length - 1) {
+                    currentFrame++;
+                } else {
+                    currentFrame = 0;
+                }
+                scrubber.value = currentFrame;
+                ctx.putImageData(decodedFrames[currentFrame], 0, 0);
+                updateFrameCounter();
+            }, FRAME_MS);
+        }
+
+        function stopPlaying() {
+            isPlaying = false;
+            btnPlay.textContent = '▶ Play';
+            clearInterval(playInterval);
+        }
+
+        scrubber.addEventListener('input', () => {
+            currentFrame = parseInt(scrubber.value);
+            ctx.putImageData(decodedFrames[currentFrame], 0, 0);
+            updateFrameCounter();
+        });
+
+        function updateFrameCounter() {
+            frameCounter.textContent = `${currentFrame + 1} / ${decodedFrames.length}`;
+        }
+
+        // Compile WebM
+        btnExport.addEventListener('click', async () => {
+            if (decodedFrames.length === 0) return;
+
+            // Stop playing if active (MediaRecorder conflicts with playback)
+            if (isPlaying) {
+                log('Stopping playback for encoding...', 'info');
+                stopPlaying();
+            }
+            
+            log('Compiling WebM video...', 'info');
+            exportProgress.classList.add('visible');
+            expText.textContent = 'Compiling...';
+            expPct.textContent = '0%';
+            expFill.style.width = '0%';
+            btnExport.disabled = true;
+            btnPreview.disabled = true;
+            btnDecodeAll.disabled = true;
+
+            const w = previewCanvas.width;
+            const h = previewCanvas.height;
+            const recCanvas = document.createElement('canvas');
+            recCanvas.width = w;
+            recCanvas.height = h;
+            const recCtx = recCanvas.getContext('2d');
+
+            // Auto-detect codec
+            let mimeType = 'video/webm;codecs=vp8';
+            if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                mimeType = 'video/webm;codecs=vp9';
+                log('Using VP9 codec', 'info');
+            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                mimeType = 'video/webm;codecs=vp8';
+                log('Using VP8 codec', 'info');
+            } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                mimeType = 'video/webm';
+                log('Using default WebM codec', 'info');
+            } else {
+                log('No supported video codec found!', 'error');
+                btnExport.disabled = false;
+                btnPreview.disabled = false;
+                btnDecodeAll.disabled = false;
+                exportProgress.classList.remove('visible');
+                return;
+            }
+
+            const stream = recCanvas.captureStream(FPS);
+            const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+            const chunks = [];
+
+            recorder.ondataavailable = e => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+
+            const done = new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    log('Recording timeout!', 'error');
+                    recorder.stop();
+                    reject(new Error('Timeout'));
+                }, 60000);
+
+                recorder.onstop = () => {
+                    clearTimeout(timeout);
+                    if (chunks.length === 0) {
+                        reject(new Error('No video data'));
+                        return;
+                    }
+                    const blob = new Blob(chunks, { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `local_decode_${Date.now()}.webm`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    log('Video saved!', 'success');
+                    btnExport.disabled = false;
+                    btnPreview.disabled = false;
+                    btnDecodeAll.disabled = false;
+                    expPct.textContent = '100%';
+                    resolve();
+                };
+
+                recorder.onerror = () => {
+                    log('Recorder error!', 'error');
+                    btnExport.disabled = false;
+                    btnPreview.disabled = false;
+                    btnDecodeAll.disabled = false;
+                    reject(new Error('Recorder error'));
+                };
+            });
+
+            recorder.start();
+            const total = decodedFrames.length;
+
+            for (let i = 0; i < total; i++) {
+                recCtx.putImageData(decodedFrames[i], 0, 0);
+                await new Promise(r => setTimeout(r, FRAME_MS));
+                const pct = Math.round(((i + 1) / total) * 100);
+                expFill.style.width = pct + '%';
+                expPct.textContent = pct + '%';
+
+                if (i === Math.floor(total * 0.25) || i === Math.floor(total * 0.5) || i === Math.floor(total * 0.75)) {
+                    log(`Encoding: ${pct}%`, 'info');
+                }
+            }
+
+            log('All frames rendered, stopping recorder...', 'info');
+            recorder.stop();
+            await done;
+        });
+    </script>
+</body>
+</html>

@@ -69,6 +69,7 @@ Use this tool to test decoding with already generated tasks (saves API tokens):
 |------|-------------|
 | `wan22-16fps-8sec.html` | Full video generator with image upload and ComfyUI workflow submission |
 | `download_and_decode.html` | Test tool for downloading and decoding existing tasks (saves tokens) |
+| `local_decode_video.html` | Offline decoder for local PNG/ZIP/frame folders (no API needed) |
 
 ## Browser Compatibility
 
@@ -89,3 +90,4 @@ This project uses partner invite code `qlbtubgi` — support the development by 
 - **Fixed**: VP8 codec fallback for browsers without VP9 support
 - **Improved**: Detailed logging for download, decode, and encoding progress
 - **Fixed**: Auto-detection of frames by `nodeId` (421 = frames, 422 = watermark)
+- **Added**: `local_decode_video.html` — offline decoder for local files (ZIP, folder, or individual PNGs)
