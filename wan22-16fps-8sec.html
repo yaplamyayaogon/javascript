@@ -173,6 +173,103 @@
             transform: none;
         }
 
+        /* History dropdown styles */
+        .field-wrapper {
+            position: relative;
+        }
+        
+        .history-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.65rem;
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 2;
+        }
+        
+        .history-btn:hover {
+            background: rgba(0, 210, 255, 0.2);
+            color: var(--primary);
+        }
+        
+        .history-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: rgba(15, 12, 41, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .history-dropdown.show {
+            display: block;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.15s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-item:hover {
+            background: rgba(0, 210, 255, 0.1);
+            color: white;
+        }
+        
+        .history-item-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+        
+        .history-item-delete {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: color 0.15s;
+            flex-shrink: 0;
+        }
+        
+        .history-item-delete:hover {
+            color: var(--error);
+        }
+        
+        .history-empty {
+            padding: 12px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+        }
+
         .status-panel {
             margin-top: 30px;
             padding: 20px;
@@ -371,9 +468,11 @@
 <div class="container">
     <h1>Wan2.2 Generator</h1>
 
-    <div class="input-group">
+    <div class="input-group field-wrapper" data-history="api-key">
         <label for="api-key"><a href="https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a> API Key</label>
         <input type="text" id="api-key" placeholder="Enter your 32-bit API Key...">
+        <button class="history-btn" type="button" title="History">▼</button>
+        <div class="history-dropdown"></div>
         <div style="margin-top: 5px; text-align: left;">
             <a href="https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none;">Get your API Key here</a>
         </div>
@@ -396,9 +495,11 @@
         </div>
     </div>
 
-    <div class="input-group">
+    <div class="input-group field-wrapper" data-history="lora-high">
         <label for="lora-high">LoRA High</label>
         <input type="text" id="lora-high" value="POVcloseMoment_high.safetensors">
+        <button class="history-btn" type="button" title="History">▼</button>
+        <div class="history-dropdown"></div>
     </div>
 
     <div class="input-group">
@@ -406,9 +507,11 @@
         <input type="text" id="strength-high" value="1.0000000000000002">
     </div>
 
-    <div class="input-group">
+    <div class="input-group field-wrapper" data-history="lora-low">
         <label for="lora-low">LoRA Low</label>
         <input type="text" id="lora-low" value="POVcloseMoment_low.safetensors">
+        <button class="history-btn" type="button" title="History">▼</button>
+        <div class="history-dropdown"></div>
     </div>
 
     <div class="input-group">
@@ -416,14 +519,18 @@
         <input type="text" id="strength-low" value="1.0000000000000002">
     </div>
 
-    <div class="input-group">
+    <div class="input-group field-wrapper" data-history="prompt">
         <label for="prompt">Prompt</label>
         <textarea id="prompt" placeholder="Enter your video description..."></textarea>
+        <button class="history-btn" type="button" title="History">▼</button>
+        <div class="history-dropdown"></div>
     </div>
 
-    <div class="input-group">
+    <div class="input-group field-wrapper" data-history="negative-prompt">
         <label for="negative-prompt">Negative Prompt</label>
         <textarea id="negative-prompt">色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走</textarea>
+        <button class="history-btn" type="button" title="History">▼</button>
+        <div class="history-dropdown"></div>
     </div>
 
     <button id="start-btn" disabled>Generate Video</button>
@@ -539,6 +646,129 @@
     const savedKey = localStorage.getItem('rh_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
 
+    // Save API key on input
+    apiKeyInput.oninput = () => {
+        localStorage.setItem('rh_api_key', apiKeyInput.value);
+        validateInputs();
+    };
+
+    // History Management
+    const HISTORY_MAX = 10;
+    const HISTORY_KEYS = {
+        'api-key': 'lh_api_key_history',
+        'lora-high': 'lh_lora_high_history',
+        'lora-low': 'lh_lora_low_history',
+        'prompt': 'lh_prompt_history',
+        'negative-prompt': 'lh_negative_prompt_history'
+    };
+
+    function getHistory(key) {
+        try {
+            return JSON.parse(localStorage.getItem(key)) || [];
+        } catch { return []; }
+    }
+
+    function saveToHistory(key, value) {
+        if (!value || !value.trim()) return;
+        const history = getHistory(key);
+        // Удалить дубликат если есть
+        const filtered = history.filter(v => v !== value.trim());
+        // Добавить в начало
+        filtered.unshift(value.trim());
+        // Обрезать до максимума
+        while (filtered.length > HISTORY_MAX) filtered.pop();
+        localStorage.setItem(key, JSON.stringify(filtered));
+    }
+
+    function deleteFromHistory(key, index) {
+        const history = getHistory(key);
+        history.splice(index, 1);
+        localStorage.setItem(key, JSON.stringify(history));
+    }
+
+    function showHistoryDropdown(wrapper, key) {
+        const dropdown = wrapper.querySelector('.history-dropdown');
+        const history = getHistory(key);
+        
+        // Очистить и заполнить
+        dropdown.innerHTML = '';
+        
+        if (history.length === 0) {
+            dropdown.innerHTML = '<div class="history-empty">No history yet</div>';
+        } else {
+            history.forEach((value, index) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <span class="history-item-text" title="${value.replace(/"/g, '&quot;')}">${value}</span>
+                    <button class="history-item-delete" type="button" title="Delete">×</button>
+                `;
+                
+                // Клик по элементу — подставить значение
+                item.querySelector('.history-item-text').onclick = () => {
+                    const input = wrapper.querySelector('input, textarea');
+                    if (input) {
+                        input.value = value;
+                        input.dispatchEvent(new Event('input'));
+                    }
+                    dropdown.classList.remove('show');
+                };
+                
+                // Кнопка удаления
+                item.querySelector('.history-item-delete').onclick = (e) => {
+                    e.stopPropagation();
+                    deleteFromHistory(key, index);
+                    showHistoryDropdown(wrapper, key);
+                };
+                
+                dropdown.appendChild(item);
+            });
+        }
+        
+        dropdown.classList.add('show');
+    }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.history-dropdown.show').forEach(d => d.classList.remove('show'));
+    }
+
+    // Инициализация dropdown-историй
+    document.querySelectorAll('.field-wrapper').forEach(wrapper => {
+        const key = wrapper.dataset.history;
+        const btn = wrapper.querySelector('.history-btn');
+        const input = wrapper.querySelector('input, textarea');
+        
+        if (btn && key) {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const dropdown = wrapper.querySelector('.history-dropdown');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                } else {
+                    // Закрыть другие dropdown'ы
+                    closeAllDropdowns();
+                    showHistoryDropdown(wrapper, key);
+                }
+            };
+        }
+        
+        // Сохранять в историю при потере фокуса
+        if (input) {
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    saveToHistory(key, input.value);
+                }, 150);
+            });
+        }
+    });
+
+    // Закрыть dropdown при клике вне
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.field-wrapper')) {
+            closeAllDropdowns();
+        }
+    });
+
     // Key input save
     apiKeyInput.oninput = () => {
         localStorage.setItem('rh_api_key', apiKeyInput.value);
@@ -618,6 +848,42 @@
         }
     }
 
+    // Resize image to target dimensions using Canvas API (cross-browser)
+    function resizeImage(file, targetW, targetH) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = targetW;
+                canvas.height = targetH;
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, targetW, targetH);
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const resized = new File([blob], file.name, { type: file.type });
+                        resolve(resized);
+                    } else {
+                        reject(new Error('Canvas toBlob failed'));
+                    }
+                }, file.type, 0.92);
+            };
+            img.onerror = () => reject(new Error('Image load failed'));
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
+    // Get image natural dimensions without rendering
+    function getImageDimensions(file) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+            img.onerror = () => reject(new Error('Image load failed'));
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
     function validateInputs() {
         startBtn.disabled = !(selectedFile && selectedWmFile && apiKeyInput.value.length >= 30);
     }
@@ -655,10 +921,10 @@
             setStep('step-upload', 'active');
             log("Uploading images...");
             
-            const uploadSrc = await uploadToRH(selectedFile, apiKey);
+            const uploadSrc = await uploadToRH(selectedFile, apiKey, true);
             log(`Source Image uploaded: ${uploadSrc}`, 'success');
             
-            const uploadWm = await uploadToRH(selectedWmFile, apiKey);
+            const uploadWm = await uploadToRH(selectedWmFile, apiKey, false);
             log(`Watermark uploaded: ${uploadWm}`, 'success');
             setStep('step-upload', 'completed');
 
@@ -706,16 +972,29 @@
         }
     };
 
-    async function uploadToRH(file, apiKey) {
+    async function uploadToRH(file, apiKey, resizeIfNeeded = true) {
+        // Resize source image if > 1 megapixel
+        let uploadFile = file;
+        if (resizeIfNeeded) {
+            const { width, height } = await getImageDimensions(file);
+            const pixels = width * height;
+            if (pixels > 1000000) {
+                const scale = Math.sqrt(1000000 / pixels);
+                const newW = Math.round(width * scale);
+                const newH = Math.round(height * scale);
+                log(`Source image ${width}x${height} (${(pixels/1e6).toFixed(1)}MP) → ${newW}x${newH} (${(newW*newH/1e6).toFixed(1)}MP)`, 'info');
+                uploadFile = await resizeImage(file, newW, newH);
+            }
+        }
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', uploadFile);
         const res = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${apiKey}` },
             body: formData
         });
         const data = await res.json();
-        if (data.code !== 0) throw new Error(`Upload ${file.name} failed: ` + data.message);
+        if (data.code !== 0) throw new Error(`Upload ${uploadFile.name} failed: ` + data.message);
         return data.data.download_url;
     }
 
