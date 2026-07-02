@@ -225,7 +225,6 @@
             justify-content: space-between;
             padding: 8px 12px;
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
             cursor: pointer;
             transition: all 0.15s;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -237,22 +236,20 @@
         
         .history-item:hover {
             background: rgba(0, 210, 255, 0.1);
-            color: white;
         }
         
         .history-item-text {
             flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
             margin-right: 8px;
+            color: #ffffff;
+            font-size: 0.8rem;
         }
         
         .history-item-delete {
             background: none;
             border: none;
-            color: rgba(255, 255, 255, 0.3);
-            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 1rem;
             cursor: pointer;
             padding: 0 4px;
             transition: color 0.15s;
@@ -664,7 +661,9 @@
 
     function getHistory(key) {
         try {
-            return JSON.parse(localStorage.getItem(key)) || [];
+            const history = JSON.parse(localStorage.getItem(key)) || [];
+            // Фильтруем пустые и пробельные значения
+            return history.filter(v => v && typeof v === 'string' && v.trim().length > 0);
         } catch { return []; }
     }
 
@@ -688,7 +687,13 @@
 
     function showHistoryDropdown(wrapper, key) {
         const dropdown = wrapper.querySelector('.history-dropdown');
-        const history = getHistory(key);
+        const rawHistory = JSON.parse(localStorage.getItem(key)) || [];
+        const history = rawHistory.filter(v => v && typeof v === 'string' && v.trim().length > 0);
+        
+        console.log('=== showHistoryDropdown ===');
+        console.log('key:', key);
+        console.log('rawHistory:', rawHistory);
+        console.log('filtered history:', history);
         
         // Очистить и заполнить
         dropdown.innerHTML = '';
@@ -699,33 +704,72 @@
             history.forEach((value, index) => {
                 const item = document.createElement('div');
                 item.className = 'history-item';
-                item.innerHTML = `
-                    <span class="history-item-text" title="${value.replace(/"/g, '&quot;')}">${value}</span>
-                    <button class="history-item-delete" type="button" title="Delete">×</button>
-                `;
+                item.setAttribute('data-index', index);
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.padding = '8px 12px';
+                item.style.fontSize = '0.8rem';
+                item.style.color = '#e0e0e0';
+                item.style.cursor = 'pointer';
+                item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
                 
-                // Клик по элементу — подставить значение
-                item.querySelector('.history-item-text').onclick = () => {
-                    const input = wrapper.querySelector('input, textarea');
-                    if (input) {
-                        input.value = value;
-                        input.dispatchEvent(new Event('input'));
-                    }
-                    dropdown.classList.remove('show');
-                };
+                const textSpan = document.createElement('span');
+                textSpan.className = 'history-item-text';
+                textSpan.textContent = value;
+                textSpan.title = value;
+                textSpan.style.flex = '1';
+                textSpan.style.marginRight = '8px';
+                textSpan.style.color = '#e0e0e0';
+                textSpan.style.fontSize = '0.8rem';
+                // Убрал overflow/ellipsis для отладки
                 
-                // Кнопка удаления
-                item.querySelector('.history-item-delete').onclick = (e) => {
-                    e.stopPropagation();
-                    deleteFromHistory(key, index);
-                    showHistoryDropdown(wrapper, key);
-                };
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'history-item-delete';
+                deleteBtn.type = 'button';
+                deleteBtn.title = 'Delete';
+                deleteBtn.textContent = '×';
+                deleteBtn.style.background = 'none';
+                deleteBtn.style.border = 'none';
+                deleteBtn.style.color = 'rgba(255, 255, 255, 0.3)';
+                deleteBtn.style.fontSize = '0.9rem';
+                deleteBtn.style.cursor = 'pointer';
+                deleteBtn.style.padding = '0 4px';
                 
+                item.appendChild(textSpan);
+                item.appendChild(deleteBtn);
                 dropdown.appendChild(item);
+                
+                console.log('Created item HTML:', item.innerHTML);
+                console.log('Text span node:', textSpan);
             });
         }
         
         dropdown.classList.add('show');
+        console.log('Dropdown children count:', dropdown.children.length);
+        
+        // Делегирование событий — один обработчик на весь dropdown
+        dropdown.onclick = (e) => {
+            const deleteBtn = e.target.closest('.history-item-delete');
+            if (deleteBtn) {
+                const item = deleteBtn.closest('.history-item');
+                const idx = parseInt(item.getAttribute('data-index'), 10);
+                deleteFromHistory(key, idx);
+                showHistoryDropdown(wrapper, key);
+                return;
+            }
+            
+            const item = e.target.closest('.history-item');
+            if (item) {
+                const textSpan = item.querySelector('.history-item-text');
+                const input = wrapper.querySelector('input, textarea');
+                if (input && textSpan) {
+                    input.value = textSpan.textContent;
+                    input.dispatchEvent(new Event('input'));
+                }
+                dropdown.classList.remove('show');
+            }
+        };
     }
 
     function closeAllDropdowns() {
@@ -1016,9 +1060,12 @@
                 if (data.status === 'SUCCESS') {
                     setStep('step-process', 'completed');
                     
-                    // Выводим первые 3 URL полностью для отладки
-                    log(`Results: ${data.results.length} files`, 'success');
-                    for (let i = 0; i < Math.min(3, data.results.length); i++) {
+                    // Полная отладка ответа API
+                    console.log('=== API RESPONSE (SUCCESS) ===');
+                    console.log(JSON.stringify(data, null, 2));
+                    
+                    log(`Results: ${data.results?.length ?? 0} files`, 'success');
+                    for (let i = 0; i < Math.min(3, data.results?.length ?? 0); i++) {
                         log(`Result[${i}]: ${data.results[i].url}`, 'info');
                     }
                     
