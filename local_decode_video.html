@@ -508,14 +508,24 @@
                 // Sort by name (should be chronological)
                 pngFiles.sort((a, b) => a.name.localeCompare(b.name));
 
-                // First file is likely watermark, rest are shots
-                if (pngFiles.length > 1) {
-                    watermarkBlob = pngFiles[0];
-                    shotBlobs = pngFiles.slice(1);
-                    log(`Found: 1 watermark + ${shotBlobs.length} shots`, 'success');
-                } else if (pngFiles.length === 1) {
-                    log('Only 1 image found. Need watermark + frames.', 'error');
-                    return;
+                // Find watermark and shots by name
+                const watermarkFiles = pngFiles.filter(f => /watermark|wm|first_frame/i.test(f.name));
+                const shotFiles = pngFiles.filter(f => /shot|frame|output/i.test(f.name));
+
+                if (watermarkFiles.length > 0 && shotFiles.length > 0) {
+                    watermarkBlob = watermarkFiles[0];
+                    shotBlobs = shotFiles;
+                    log(`Found: ${shotFiles.length} shots + ${watermarkFiles.length} watermarks`, 'success');
+                } else {
+                    // Fallback: first = watermark, rest = shots
+                    if (pngFiles.length > 1) {
+                        watermarkBlob = pngFiles[0];
+                        shotBlobs = pngFiles.slice(1);
+                        log(`Fallback: ${shotBlobs.length} shots + 1 watermark`, 'warning');
+                    } else if (pngFiles.length === 1) {
+                        log('Only 1 image found. Need watermark + frames.', 'error');
+                        return;
+                    }
                 }
             }
 
