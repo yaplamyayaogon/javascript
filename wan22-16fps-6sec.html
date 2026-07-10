@@ -633,8 +633,29 @@
     const dropZoneWm = document.getElementById('drop-zone-wm');
     const fileInputWm = document.getElementById('file-input-wm');
 
+    // Player Elements
+    const previewCanvas = document.getElementById('previewCanvas');
+    const ctx = previewCanvas.getContext('2d');
+    const scrubber = document.getElementById('scrubber');
+    const frameCounter = document.getElementById('frameCounter');
+    const btnFirst = document.getElementById('btnFirst');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnNext = document.getElementById('btnNext');
+    const btnLast = document.getElementById('btnLast');
+    
+    // Export Elements
+    const btnExport = document.getElementById('btnExport');
+    const expFill = document.getElementById('expFill');
+    const expPct = document.getElementById('expPct');
+
     let selectedFile = null;
     let selectedWmFile = null;
+    let decodedFrames = [];
+    let currentFrame = 0;
+    let isPlaying = false;
+    let playTimer = null;
+    let isRecording = false;
 
     // Load API Key
     const savedKey = localStorage.getItem('rh_api_key');
