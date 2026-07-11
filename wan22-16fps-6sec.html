@@ -1179,6 +1179,163 @@
         return { data: ox.getImageData(0, 0, w, h), w, h };
     }
 
+    // Player logic
+    function initPlayer() {
+        const n = decodedFrames.length;
+        scrubber.max = n - 1;
+        scrubber.value = 0;
+        scrubber.disabled = false;
+        btnExport.disabled = false;
+        updateCounter(0);
+        setPlayerBtns(true);
+    }
+
+    function setPlayerBtns(on) {
+        [btnPlay, btnFirst, btnPrev, btnNext, btnLast].forEach(b => b.disabled = !on);
+    }
+
+    function showFrame(idx) {
+        if (!decodedFrames.length) return;
+        idx = Math.max(0, Math.min(idx, decodedFrames.length - 1));
+        currentFrame = idx;
+        scrubber.value = idx;
+        ctx.putImageData(decodedFrames[idx], 0, 0);
+        updateCounter(idx);
+    }
+
+    function updateCounter(idx) {
+        frameCounter.textContent = `${idx + 1} / ${decodedFrames.length}`;
+    }
+
+    btnPlay.onclick = () => isPlaying ? stopPlay() : startPlay();
+    btnFirst.onclick = () => { stopPlay(); showFrame(0); };
+    btnLast.onclick = () => { stopPlay(); showFrame(decodedFrames.length - 1); };
+    btnPrev.onclick = () => { stopPlay(); showFrame(currentFrame - 1); };
+    btnNext.onclick = () => { stopPlay(); showFrame(currentFrame + 1); };
+    scrubber.oninput = (e) => { stopPlay(); showFrame(parseInt(e.target.value, 10)); };
+
+    function startPlay() {
+        isPlaying = true;
+        btnPlay.textContent = '⏸';
+        scheduleNext();
+    }
+
+    function stopPlay() {
+        isPlaying = false;
+        btnPlay.textContent = '▶';
+        if (playTimer) clearTimeout(playTimer);
+    }
+
+    function scheduleNext() {
+        if (!isPlaying) return;
+        showFrame((currentFrame + 1) % decodedFrames.length);
+        playTimer = setTimeout(scheduleNext, FRAME_MS);
+    }
+
+    // Compile WebM Video
+    btnExport.onclick = async () => {
+        if (!decodedFrames.length || isRecording) return;
+        isRecording = true;
+        btnExport.disabled = true;
+        expFill.style.width = '0%';
+        expPct.textContent = '0%';
+
+        log("Compiling WebM video stream...", 'info');
+
+        const w = previewCanvas.width;
+        const h = previewCanvas.height;
+        const recCanvas = document.createElement('canvas');
+        recCanvas.width = w;
+        recCanvas.height = h;
+        const recCtx = recCanvas.getContext('2d');
+
+        // Выбираем поддерживаемый кодек
+        let mimeType = 'video/webm;codecs=vp8';
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+            mimeType = 'video/webm;codecs=vp9';
+            log('Using VP9 codec', 'info');
+        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+            mimeType = 'video/webm;codecs=vp8';
+            log('Using VP8 codec', 'info');
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
+            mimeType = 'video/webm';
+            log('Using default WebM codec', 'info');
+        } else {
+            throw new Error('No supported video codec found. Try Chrome or Firefox.');
+        }
+
+        const stream = recCanvas.captureStream(FPS);
+        const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+        const chunks = [];
+        
+        let dataAvailableCount = 0;
+
+        recorder.ondataavailable = e => { 
+            if (e.data.size > 0) {
+                chunks.push(e.data);
+                dataAvailableCount++;
+                log(`Data chunk ${dataAvailableCount}: ${e.data.size} bytes`, 'info');
+            }
+        };
+        
+        const done = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                log('Recording timeout - forcing stop', 'error');
+                recorder.stop();
+                reject(new Error('Recording timeout after 30 seconds'));
+            }, 30000);
+            
+            recorder.onstop = () => {
+                clearTimeout(timeout);
+                log(`Recording stopped. Total chunks: ${chunks.length}`, 'success');
+                
+                if (chunks.length === 0) {
+                    reject(new Error('No video data recorded'));
+                    return;
+                }
+                
+                const blob = new Blob(chunks, { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rh_decoded_${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                log("Video saved!", 'success');
+                isRecording = false;
+                btnExport.disabled = false;
+                expPct.textContent = '100%';
+                resolve();
+            };
+            
+            recorder.onerror = (e) => {
+                log('Recorder error: ' + JSON.stringify(e), 'error');
+                reject(new Error('MediaRecorder error'));
+            };
+        });
+
+        log(`Starting recording: ${decodedFrames.length} frames at ${FPS} FPS`, 'info');
+        recorder.start();
+
+        const total = decodedFrames.length;
+        for (let i = 0; i < total; i++) {
+            recCtx.putImageData(decodedFrames[i], 0, 0);
+            await new Promise(r => setTimeout(r, FRAME_MS));
+            const pct = Math.round(((i + 1) / total) * 100);
+            expFill.style.width = pct + '%';
+            expPct.textContent = pct + '%';
+            
+            // Лог каждые 25%
+            if (i === Math.floor(total * 0.25) || i === Math.floor(total * 0.5) || i === Math.floor(total * 0.75)) {
+                log(`Encoding progress: ${pct}%`, 'info');
+            }
+        }
+        
+        log('All frames rendered, stopping recorder...', 'info');
+        recorder.stop();
+        await done;
+    };
+
     async function decodeAll(shotBlobs, wmBlob) {
         try {
             decodedFrames = [];
@@ -1225,17 +1382,6 @@
         } finally {
             startBtn.disabled = false;
         }
-    }
-
-    // 4. Video Player logic
-    function initPlayer() {
-        const n = decodedFrames.length;
-        scrubber.max = n - 1;
-        scrubber.value = 0;
-        scrubber.disabled = false;
-        btnExport.disabled = false;
-        updateCounter(0);
-        setPlayerBtns(true);
     }
 </script>
 
