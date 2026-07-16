@@ -1,30 +1,30 @@
 # RunningHub Video Generator
 
-Генерация видео из изображений через [RunningHub](https://www.runninghub.ai/?inviteCode=qlbtubgi) API.
+Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCode=qlbtubgi) API.
 
-## Генераторы
+## Generators
 
-| Файл | Длительность | Кадров |
-|------|-------------|--------|
-| [wan22-16fps-8sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-8sec.html) | 8 сек | 141 |
-| [wan22-16fps-6sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-6sec.html) | 6 сек | 97 |
+| File | Duration | Frames |
+|------|----------|--------|
+| [wan22-16fps-8sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-8sec.html) | 8 sec | 141 |
+| [wan22-16fps-6sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-6sec.html) | 6 sec | 97 |
 
-## Инструменты
+## Tools
 
-| Файл | Назначение |
-|------|-----------|
-| [download_and_decode.html](https://yaplamyayaogon.github.io/javascript/download_and_decode.html) | Скачать и декодировать готовую задачу по Task ID |
-| [local_decode_video.html](https://yaplamyayaogon.github.io/javascript/local_decode_video.html) | Декодировать локальные PNG/ZIP без API |
+| File | Purpose |
+|------|---------|
+| [download_and_decode.html](https://yaplamyayaogon.github.io/javascript/download_and_decode.html) | Download and decode an existing task by Task ID |
+| [local_decode_video.html](https://yaplamyayaogon.github.io/javascript/local_decode_video.html) | Decode local PNG/ZIP files without API |
 
-## Использование
+## Usage
 
-1. Введите [API Key](https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi)
-2. Загрузите изображение и watermark
-3. Нажмите "Generate Video"
-4. Дождитесь декодирования → превью → скачайте WebM
+1. Enter your [API Key](https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi)
+2. Upload source image and watermark
+3. Click "Generate Video"
+4. Wait for decoding → preview → download WebM
 
-## Браузеры
+## Browsers
 
-- **Chrome** — полная поддержка
-- **Firefox** — VP8 (Linux)
-- **Safari** — ограниченная
+- **Chrome** — Full support
+- **Firefox** — Full support (VP8/VP9 auto-detect)
+- **Safari** — Limited

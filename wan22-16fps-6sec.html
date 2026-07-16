@@ -495,13 +495,6 @@
                 <input type="file" id="file-input" accept="image/*" style="display: none;">
             </div>
         </div>
-        <div class="input-group">
-            <label>Watermark Image</label>
-            <div class="drop-zone" id="drop-zone-wm">
-                <p id="file-info-wm">Click or drag watermark here</p>
-                <input type="file" id="file-input-wm" accept="image/*" style="display: none;">
-            </div>
-        </div>
     </div>
 
     <div class="input-group field-wrapper" data-history="lora-high">
@@ -632,8 +625,6 @@
     // Dual Dropzones
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
-    const dropZoneWm = document.getElementById('drop-zone-wm');
-    const fileInputWm = document.getElementById('file-input-wm');
 
     // Player Elements
     const previewCanvas = document.getElementById('previewCanvas');
@@ -652,7 +643,6 @@
     const expPct = document.getElementById('expPct');
 
     let selectedFile = null;
-    let selectedWmFile = null;
     let decodedFrames = [];
     let currentFrame = 0;
     let isPlaying = false;
@@ -854,16 +844,6 @@
         handleFile(e.dataTransfer.files[0], 'src');
     };
 
-    dropZoneWm.onclick = () => fileInputWm.click();
-    fileInputWm.onchange = (e) => handleFile(e.target.files[0], 'wm');
-    dropZoneWm.ondragover = (e) => { e.preventDefault(); dropZoneWm.classList.add('dragover'); };
-    dropZoneWm.ondragleave = () => dropZoneWm.classList.remove('dragover');
-    dropZoneWm.ondrop = (e) => {
-        e.preventDefault();
-        dropZoneWm.classList.remove('dragover');
-        handleFile(e.dataTransfer.files[0], 'wm');
-    };
-
     function handleFile(file, type) {
         if (file && file.type.startsWith('image/')) {
             if (type === 'src') {
@@ -886,27 +866,6 @@
                 // Обновляем текст и добавляем класс для стилизации
                 fileInfo.innerText = `✓ ${file.name}`;
                 dropZone.classList.add('has-image');
-                
-            } else {
-                selectedWmFile = file;
-                const fileInfo = document.getElementById('file-info-wm');
-                
-                // Создаем URL для превью
-                const imgUrl = URL.createObjectURL(file);
-                
-                // Удаляем старое превью если есть
-                const oldPreview = dropZoneWm.querySelector('.preview-img');
-                if (oldPreview) oldPreview.remove();
-                
-                // Создаем элемент изображения для превью
-                const img = document.createElement('img');
-                img.className = 'preview-img';
-                img.src = imgUrl;
-                dropZoneWm.appendChild(img);
-                
-                // Обновляем текст и добавляем класс для стилизации
-                fileInfo.innerText = `✓ ${file.name}`;
-                dropZoneWm.classList.add('has-image');
             }
             validateInputs();
         }
@@ -949,7 +908,7 @@
     }
 
     function validateInputs() {
-        startBtn.disabled = !(selectedFile && selectedWmFile && apiKeyInput.value.length >= 30);
+        startBtn.disabled = !(selectedFile && apiKeyInput.value.length >= 30);
     }
 
     function log(msg, type = 'info') {
@@ -988,7 +947,12 @@
             const uploadSrc = await uploadToRH(selectedFile, apiKey, true);
             log(`Source Image uploaded: ${uploadSrc}`, 'success');
             
-            const uploadWm = await uploadToRH(selectedWmFile, apiKey, false);
+            // Загружаем фиксированный watermark из локального файла
+            log("Loading watermark...");
+            const wmResponse = await fetch('img/Watermark_Image.png');
+            const wmBlob = await wmResponse.blob();
+            const wmFile = new File([wmBlob], 'Watermark_Image.png', { type: 'image/png' });
+            const uploadWm = await uploadToRH(wmFile, apiKey, false);
             log(`Watermark uploaded: ${uploadWm}`, 'success');
             setStep('step-upload', 'completed');
 
