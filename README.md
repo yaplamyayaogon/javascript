@@ -19,9 +19,13 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 ## Usage
 
 1. Enter your [API Key](https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi)
-2. Upload source image and watermark
+2. Upload source image (watermark is loaded automatically)
 3. Click "Generate Video"
 4. Wait for decoding → preview → download WebM
+
+## Share Settings
+
+Click "Share Settings" to copy a URL with your current prompt, LoRA, and strength values. Opening the link auto-fills the fields. API Key is not included in the URL.
 
 ## Browsers
 

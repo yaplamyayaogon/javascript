@@ -173,6 +173,26 @@
             transform: none;
         }
 
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-row button {
+            margin-top: 0;
+        }
+
+        #share-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            white-space: nowrap;
+        }
+
+        #share-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
         /* History dropdown styles */
         .field-wrapper {
             position: relative;
@@ -543,7 +563,10 @@
         <div class="history-dropdown"></div>
     </div>
 
-    <button id="start-btn" disabled>Generate Video</button>
+    <div class="btn-row">
+        <button id="start-btn" disabled>Generate Video</button>
+        <button id="share-btn" type="button" title="Copy settings link">Share Settings</button>
+    </div>
 
     <div class="status-panel" id="status-panel">
         <div class="step" id="step-upload">
@@ -618,6 +641,7 @@
     const loraLowInput = document.getElementById('lora-low');
     const strengthLowInput = document.getElementById('strength-low');
     const startBtn = document.getElementById('start-btn');
+    const shareBtn = document.getElementById('share-btn');
     const statusPanel = document.getElementById('status-panel');
     const resultContainer = document.getElementById('result-container');
     const consoleLog = document.getElementById('console-log');
@@ -657,6 +681,46 @@
     apiKeyInput.oninput = () => {
         localStorage.setItem('rh_api_key', apiKeyInput.value);
         validateInputs();
+    };
+
+    // Read GET parameters and fill fields
+    (function applyUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const fields = {
+            'prompt': promptInput,
+            'negative_prompt': negativePromptInput,
+            'lora-high': loraHighInput,
+            'strength-high': strengthHighInput,
+            'lora-low': loraLowInput,
+            'strength-low': strengthLowInput
+        };
+        for (const [key, el] of Object.entries(fields)) {
+            if (params.has(key)) el.value = params.get(key);
+        }
+    })();
+
+    // Share Settings button
+    shareBtn.onclick = () => {
+        const params = new URLSearchParams();
+        if (promptInput.value) params.set('prompt', promptInput.value);
+        if (negativePromptInput.value) params.set('negative_prompt', negativePromptInput.value);
+        if (loraHighInput.value) params.set('lora-high', loraHighInput.value);
+        if (strengthHighInput.value) params.set('strength-high', strengthHighInput.value);
+        if (loraLowInput.value) params.set('lora-low', loraLowInput.value);
+        if (strengthLowInput.value) params.set('strength-low', strengthLowInput.value);
+
+        const url = window.location.origin + window.location.pathname + '?' + params.toString();
+        
+        if (url.length > 2000) {
+            log('Warning: URL is very long (' + url.length + ' chars). Some browsers may truncate it.', 'error');
+        }
+
+        navigator.clipboard.writeText(url).then(() => {
+            shareBtn.textContent = '✓ Copied!';
+            setTimeout(() => { shareBtn.textContent = 'Share Settings'; }, 2000);
+        }).catch(() => {
+            log('Could not copy to clipboard. URL: ' + url, 'info');
+        });
     };
 
     // History Management
