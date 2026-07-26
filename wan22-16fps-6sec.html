@@ -173,24 +173,26 @@
             transform: none;
         }
 
-        .btn-row {
-            display: flex;
-            gap: 10px;
+        .share-link {
             margin-top: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            color: #8b949e;
+            text-align: center;
+            font-size: 0.8rem;
+            text-decoration: underline;
         }
 
-        .btn-row button {
+        .share-link:hover {
+            color: var(--primary);
+        }
+
+        .log-trigger {
             margin-top: 0;
-        }
-
-        #share-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            white-space: nowrap;
-        }
-
-        #share-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            color: var(--primary);
+            text-align: center;
+            font-size: 0.85rem;
         }
 
         /* History dropdown styles */
@@ -563,10 +565,7 @@
         <div class="history-dropdown"></div>
     </div>
 
-    <div class="btn-row">
-        <button id="start-btn" disabled>Generate Video</button>
-        <button id="share-btn" type="button" title="Copy settings link">Share Settings</button>
-    </div>
+    <button id="start-btn" disabled>Generate Video</button>
 
     <div class="status-panel" id="status-panel">
         <div class="step" id="step-upload">
@@ -623,6 +622,7 @@
         </button>
     </div>
 
+    <div class="share-link" id="share-link" onclick="copyShareUrl()" title="Copy settings link">Share Settings</div>
     <div class="log-trigger" onclick="toggleLog()">Technical Log</div>
     <div id="console-log"></div>
 </div>
@@ -641,7 +641,6 @@
     const loraLowInput = document.getElementById('lora-low');
     const strengthLowInput = document.getElementById('strength-low');
     const startBtn = document.getElementById('start-btn');
-    const shareBtn = document.getElementById('share-btn');
     const statusPanel = document.getElementById('status-panel');
     const resultContainer = document.getElementById('result-container');
     const consoleLog = document.getElementById('console-log');
@@ -699,8 +698,8 @@
         }
     })();
 
-    // Share Settings button
-    shareBtn.onclick = () => {
+    // Share Settings link
+    function copyShareUrl() {
         const params = new URLSearchParams();
         if (promptInput.value) params.set('prompt', promptInput.value);
         if (negativePromptInput.value) params.set('negative_prompt', negativePromptInput.value);
@@ -716,12 +715,13 @@
         }
 
         navigator.clipboard.writeText(url).then(() => {
-            shareBtn.textContent = '✓ Copied!';
-            setTimeout(() => { shareBtn.textContent = 'Share Settings'; }, 2000);
+            const el = document.getElementById('share-link');
+            el.textContent = '✓ Copied!';
+            setTimeout(() => { el.textContent = 'Share Settings'; }, 2000);
         }).catch(() => {
             log('Could not copy to clipboard. URL: ' + url, 'info');
         });
-    };
+    }
 
     // History Management
     const HISTORY_MAX = 10;
