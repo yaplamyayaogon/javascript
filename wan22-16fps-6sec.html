@@ -702,7 +702,6 @@
     function copyShareUrl() {
         const params = new URLSearchParams();
         if (promptInput.value) params.set('prompt', promptInput.value);
-        if (negativePromptInput.value) params.set('negative_prompt', negativePromptInput.value);
         if (loraHighInput.value) params.set('lora-high', loraHighInput.value);
         if (strengthHighInput.value) params.set('strength-high', strengthHighInput.value);
         if (loraLowInput.value) params.set('lora-low', loraLowInput.value);
