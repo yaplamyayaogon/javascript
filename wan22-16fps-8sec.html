@@ -1063,8 +1063,8 @@
             const pixels = width * height;
             if (pixels > 1000000) {
                 const scale = Math.sqrt(1000000 / pixels);
-                const newW = Math.round(width * scale);
-                const newH = Math.round(height * scale);
+                const newW = Math.floor(width * scale);
+                const newH = Math.floor(height * scale);
                 log(`Source image ${width}x${height} (${(pixels/1e6).toFixed(1)}MP) → ${newW}x${newH} (${(newW*newH/1e6).toFixed(1)}MP)`, 'info');
                 uploadFile = await resizeImage(file, newW, newH);
             }
