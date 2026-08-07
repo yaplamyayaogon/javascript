@@ -706,6 +706,7 @@
         if (strengthHighInput.value) params.set('strength-high', strengthHighInput.value);
         if (loraLowInput.value) params.set('lora-low', loraLowInput.value);
         if (strengthLowInput.value) params.set('strength-low', strengthLowInput.value);
+        if (negativePromptInput.value) params.set('negative_prompt', negativePromptInput.value);
 
         const url = window.location.origin + window.location.pathname + '?' + params.toString();
         
