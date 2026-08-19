@@ -480,12 +480,7 @@
             border-radius: 50%;
         }
 
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-    </style>
+        </style>
 </head>
 <body>
 
@@ -564,27 +559,18 @@
         <div class="history-dropdown"></div>
     </div>
 
-    <div class="two-col">
-        <div class="input-group">
-            <label for="aspect-ratio">Aspect Ratio</label>
-            <select id="aspect-ratio">
-                <option value="1:1 (Square)">1:1 (Square)</option>
-                <option value="2:3 (Portrait Photo)">2:3 (Portrait Photo)</option>
-                <option value="3:2 (Photo)">3:2 (Photo)</option>
-                <option value="3:4 (Portrait Standard)" selected>3:4 (Portrait Standard)</option>
-                <option value="4:3 (Standard)">4:3 (Standard)</option>
-                <option value="9:16 (Portrait Widescreen)">9:16 (Portrait Widescreen)</option>
-                <option value="16:9 (Widescreen)">16:9 (Widescreen)</option>
-                <option value="21:9 (Ultrawide)">21:9 (Ultrawide)</option>
-            </select>
-        </div>
-        <div class="input-group">
-            <label for="instance-type">Instance Type</label>
-            <select id="instance-type">
-                <option value="default">default (24G VRAM)</option>
-                <option value="plus">plus (48G VRAM)</option>
-            </select>
-        </div>
+    <div class="input-group">
+        <label for="aspect-ratio">Aspect Ratio</label>
+        <select id="aspect-ratio">
+            <option value="1:1 (Square)">1:1 (Square)</option>
+            <option value="2:3 (Portrait Photo)">2:3 (Portrait Photo)</option>
+            <option value="3:2 (Photo)">3:2 (Photo)</option>
+            <option value="3:4 (Portrait Standard)" selected>3:4 (Portrait Standard)</option>
+            <option value="4:3 (Standard)">4:3 (Standard)</option>
+            <option value="9:16 (Portrait Widescreen)">9:16 (Portrait Widescreen)</option>
+            <option value="16:9 (Widescreen)">16:9 (Widescreen)</option>
+            <option value="21:9 (Ultrawide)">21:9 (Ultrawide)</option>
+        </select>
     </div>
 
     <button id="start-btn" disabled>Generate Video</button>
@@ -665,7 +651,6 @@
     const loraLowInput = document.getElementById('lora-low');
     const strengthLowInput = document.getElementById('strength-low');
     const aspectRatioSelect = document.getElementById('aspect-ratio');
-    const instanceTypeSelect = document.getElementById('instance-type');
     const startBtn = document.getElementById('start-btn');
     const statusPanel = document.getElementById('status-panel');
     const resultContainer = document.getElementById('result-container');
@@ -713,32 +698,30 @@
         const params = new URLSearchParams(window.location.search);
         const fields = {
             'prompt': promptInput,
-            'lora-high': loraHighInput,
-            'strength-high': strengthHighInput,
-            'lora-mid': loraMidInput,
-            'strength-mid': strengthMidInput,
-            'lora-low': loraLowInput,
-            'strength-low': strengthLowInput
+            'lora-1': loraHighInput,
+            'strength-1': strengthHighInput,
+            'lora-2': loraMidInput,
+            'strength-2': strengthMidInput,
+            'lora-3': loraLowInput,
+            'strength-3': strengthLowInput
         };
         for (const [key, el] of Object.entries(fields)) {
             if (params.has(key)) el.value = params.get(key);
         }
         if (params.has('aspect-ratio')) aspectRatioSelect.value = params.get('aspect-ratio');
-        if (params.has('instance-type')) instanceTypeSelect.value = params.get('instance-type');
     })();
 
     // Share Settings
     function copyShareUrl() {
         const params = new URLSearchParams();
         if (promptInput.value) params.set('prompt', promptInput.value);
-        if (loraHighInput.value) params.set('lora-high', loraHighInput.value);
-        if (strengthHighInput.value) params.set('strength-high', strengthHighInput.value);
-        if (loraMidInput.value) params.set('lora-mid', loraMidInput.value);
-        if (strengthMidInput.value) params.set('strength-mid', strengthMidInput.value);
-        if (loraLowInput.value) params.set('lora-low', loraLowInput.value);
-        if (strengthLowInput.value) params.set('strength-low', strengthLowInput.value);
+        if (loraHighInput.value) params.set('lora-1', loraHighInput.value);
+        if (strengthHighInput.value) params.set('strength-1', strengthHighInput.value);
+        if (loraMidInput.value) params.set('lora-2', loraMidInput.value);
+        if (strengthMidInput.value) params.set('strength-2', strengthMidInput.value);
+        if (loraLowInput.value) params.set('lora-3', loraLowInput.value);
+        if (strengthLowInput.value) params.set('strength-3', strengthLowInput.value);
         if (aspectRatioSelect.value) params.set('aspect-ratio', aspectRatioSelect.value);
-        if (instanceTypeSelect.value) params.set('instance-type', instanceTypeSelect.value);
 
         const url = window.location.origin + window.location.pathname + '?' + params.toString();
         
@@ -912,39 +895,6 @@
         }
     }
 
-    function resizeImage(file, targetW, targetH) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = targetW;
-                canvas.height = targetH;
-                const ctx = canvas.getContext('2d');
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(img, 0, 0, targetW, targetH);
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        resolve(new File([blob], file.name, { type: file.type }));
-                    } else {
-                        reject(new Error('Canvas toBlob failed'));
-                    }
-                }, file.type, 0.92);
-            };
-            img.onerror = () => reject(new Error('Image load failed'));
-            img.src = URL.createObjectURL(file);
-        });
-    }
-
-    function getImageDimensions(file) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-            img.onerror = () => reject(new Error('Image load failed'));
-            img.src = URL.createObjectURL(file);
-        });
-    }
-
     function validateInputs() {
         startBtn.disabled = !(selectedFile && apiKeyInput.value.length >= 30);
     }
@@ -981,14 +931,14 @@
             setStep('step-upload', 'active');
             log("Uploading images...");
             
-            const uploadSrc = await uploadToRH(selectedFile, apiKey, true);
+            const uploadSrc = await uploadToRH(selectedFile, apiKey);
             log(`Source Image uploaded: ${uploadSrc}`, 'success');
             
             log("Loading watermark...");
             const wmResponse = await fetch('img/Watermark_Image.png');
             const wmBlob = await wmResponse.blob();
             const wmFile = new File([wmBlob], 'Watermark_Image.png', { type: 'image/png' });
-            const uploadWm = await uploadToRH(wmFile, apiKey, false);
+            const uploadWm = await uploadToRH(wmFile, apiKey);
             log(`Watermark uploaded: ${uploadWm}`, 'success');
             setStep('step-upload', 'completed');
 
@@ -1009,7 +959,7 @@
                     { nodeId: "221", fieldName: "strength_model", fieldValue: strengthLowInput.value, description: "Strength LoRA Low" },
                     { nodeId: "115", fieldName: "aspect_ratio", fieldValue: aspectRatioSelect.value, description: "Aspect Ratio" }
                 ],
-                instanceType: instanceTypeSelect.value,
+                instanceType: "default",
                 usePersonalQueue: "false"
             };
 
@@ -1038,28 +988,16 @@
         }
     };
 
-    async function uploadToRH(file, apiKey, resizeIfNeeded = true) {
-        let uploadFile = file;
-        if (resizeIfNeeded) {
-            const { width, height } = await getImageDimensions(file);
-            const pixels = width * height;
-            if (pixels > 1000000) {
-                const scale = Math.sqrt(1000000 / pixels);
-                const newW = Math.floor(width * scale);
-                const newH = Math.floor(height * scale);
-                log(`Source image ${width}x${height} (${(pixels/1e6).toFixed(1)}MP) → ${newW}x${newH} (${(newW*newH/1e6).toFixed(1)}MP)`, 'info');
-                uploadFile = await resizeImage(file, newW, newH);
-            }
-        }
+    async function uploadToRH(file, apiKey) {
         const formData = new FormData();
-        formData.append('file', uploadFile);
+        formData.append('file', file);
         const res = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${apiKey}` },
             body: formData
         });
         const data = await res.json();
-        if (data.code !== 0) throw new Error(`Upload ${uploadFile.name} failed: ` + data.message);
+        if (data.code !== 0) throw new Error(`Upload ${file.name} failed: ` + data.message);
         return data.data.download_url;
     }
 
