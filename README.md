@@ -4,10 +4,11 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 
 ## Generators
 
-| File | Duration | Frames |
-|------|----------|--------|
-| [wan22-16fps-8sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-8sec.html) | 8 sec | 141 |
-| [wan22-16fps-6sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-6sec.html) | 6 sec | 97 |
+| File | Duration | Frames | FPS |
+|------|----------|--------|-----|
+| [wan22-16fps-8sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-8sec.html) | 8 sec | 141 | 16 |
+| [wan22-16fps-6sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-6sec.html) | 6 sec | 97 | 16 |
+| [minimax-h3-24fps-15sec.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-24fps-15sec.html) | 15 sec | 360 | 24 |
 
 ## Tools
 
@@ -20,8 +21,17 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 
 1. Enter your [API Key](https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi)
 2. Upload source image (watermark is loaded automatically)
-3. Click "Generate Video"
-4. Wait for decoding → preview → download WebM
+3. Configure LoRA, aspect ratio, instance type (MiniMax H3 only)
+4. Click "Generate Video"
+5. Wait for decoding → preview → download WebM
+
+## MiniMax H3 Features
+
+- **3 LoRA slots** (LoRA 1/2/3) with individual strength
+- **Aspect ratio** selector (1:1, 2:3, 3:2, 3:4, 4:3, 9:16, 16:9, 21:9)
+- **Instance type** selector (default 24G / plus 48G VRAM)
+- **Audio support** — auto-detects `ComfyUI_*.mp3` in results, FPS calculated from audio duration
+- **24 FPS** default (vs 16 FPS in Wan2.2 generators)
 
 ## Share Settings
 

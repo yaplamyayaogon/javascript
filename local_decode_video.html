@@ -357,6 +357,7 @@
     let currentFrame = 0;
     let FPS = 16;
     let FRAME_MS = 1000 / FPS;
+    let audioBlob = null;
 
     // Elements
     const dropzone = document.getElementById('dropzone');
@@ -495,6 +496,7 @@
             shotBlobs = [];
             decodedFrames = [];
             currentFrame = 0;
+            audioBlob = null;
 
             // Check if single ZIP
             const zipFiles = files.filter(f => f.name.endsWith('.zip'));
@@ -527,6 +529,13 @@
                         return;
                     }
                 }
+
+                // Find audio file (ComfyUI_*.mp3)
+                const audioFiles = files.filter(f => /\.mp3$/i.test(f.name) && /ComfyUI_/i.test(f.name));
+                if (audioFiles.length > 0) {
+                    audioBlob = audioFiles[0];
+                    log(`Audio detected: ${audioFiles[0].name}`, 'success');
+                }
             }
 
             // Show file info
@@ -557,6 +566,11 @@
                     if (!file.dir && /\.(png|jpg|jpeg)$/i.test(name)) {
                         const blob = await file.async('blob');
                         allFiles.push({ name, blob });
+                    }
+                    // Search for audio (ComfyUI_*.mp3)
+                    if (!file.dir && /\.mp3$/i.test(name) && /ComfyUI_/i.test(name)) {
+                        audioBlob = await file.async('blob');
+                        log(`Audio detected in ZIP: ${name}`, 'success');
                     }
                 }
 
@@ -589,8 +603,14 @@
             fileInfoList.innerHTML = `
                 Total loaded: <span>${totalFiles}</span><br>
                 Watermark: <span>${watermarkBlob ? 'YES (1 file)' : 'NO'}</span><br>
-                Shots: <span>${shotBlobs.length} frames</span>
+                Shots: <span>${shotBlobs.length} frames</span><br>
+                Audio: <span>${audioBlob ? '🎵 YES' : 'NO'}</span>
             `;
+            if (audioBlob) {
+                btnExport.textContent = 'Compile WebM with Audio';
+            } else {
+                btnExport.textContent = 'Compile WebM';
+            }
         }
 
         // Decode all frames
@@ -766,28 +786,90 @@
             recCanvas.height = h;
             const recCtx = recCanvas.getContext('2d');
 
-            // Auto-detect codec
-            let mimeType = 'video/webm;codecs=vp8';
-            if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-                mimeType = 'video/webm;codecs=vp9';
-                log('Using VP9 codec', 'info');
-            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-                mimeType = 'video/webm;codecs=vp8';
-                log('Using VP8 codec', 'info');
-            } else if (MediaRecorder.isTypeSupported('video/webm')) {
-                mimeType = 'video/webm';
-                log('Using default WebM codec', 'info');
-            } else {
-                log('No supported video codec found!', 'error');
-                btnExport.disabled = false;
-                btnPreview.disabled = false;
-                btnDecodeAll.disabled = false;
-                exportProgress.classList.remove('visible');
-                return;
+            // Determine FPS and duration
+            let exportFPS = FPS;
+            let audioBuffer = null;
+            let audioContext = null;
+            let audioDest = null;
+            let audioSource = null;
+
+            if (audioBlob) {
+                // Decode audio to get duration
+                log('Decoding audio...', 'info');
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                const audioDuration = audioBuffer.duration;
+                log(`Audio duration: ${audioDuration.toFixed(2)}s`, 'info');
+
+                // Calculate FPS from audio duration
+                exportFPS = decodedFrames.length / audioDuration;
+                log(`Calculated FPS: ${exportFPS.toFixed(2)} (${decodedFrames.length} frames / ${audioDuration.toFixed(2)}s)`, 'info');
             }
 
-            const stream = recCanvas.captureStream(FPS);
-            const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+            const exportFrameMs = 1000 / exportFPS;
+
+            // Auto-detect codec
+            let mimeType = 'video/webm;codecs=vp8';
+            if (audioBlob) {
+                // With audio — prefer opus codec
+                if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
+                    mimeType = 'video/webm;codecs=vp9,opus';
+                    log('Using VP9+Opus codec', 'info');
+                } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
+                    mimeType = 'video/webm;codecs=vp8,opus';
+                    log('Using VP8+Opus codec', 'info');
+                } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                    mimeType = 'video/webm;codecs=vp8';
+                    log('Using VP8 codec (audio may not be included)', 'warning');
+                } else {
+                    log('No supported video codec found!', 'error');
+                    btnExport.disabled = false;
+                    btnPreview.disabled = false;
+                    btnDecodeAll.disabled = false;
+                    exportProgress.classList.remove('visible');
+                    return;
+                }
+            } else {
+                // No audio — as before
+                if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                    mimeType = 'video/webm;codecs=vp9';
+                    log('Using VP9 codec', 'info');
+                } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                    mimeType = 'video/webm;codecs=vp8';
+                    log('Using VP8 codec', 'info');
+                } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                    mimeType = 'video/webm';
+                    log('Using default WebM codec', 'info');
+                } else {
+                    log('No supported video codec found!', 'error');
+                    btnExport.disabled = false;
+                    btnPreview.disabled = false;
+                    btnDecodeAll.disabled = false;
+                    exportProgress.classList.remove('visible');
+                    return;
+                }
+            }
+
+            // Build stream: video + optional audio
+            const videoStream = recCanvas.captureStream(exportFPS);
+            let combinedStream = videoStream;
+
+            if (audioBlob && audioBuffer) {
+                audioDest = audioContext.createMediaStreamDestination();
+                audioSource = audioContext.createBufferSource();
+                audioSource.buffer = audioBuffer;
+                audioSource.connect(audioDest);
+                // Connect to destination for playback (optional)
+                // audioSource.connect(audioContext.destination);
+
+                combinedStream = new MediaStream([
+                    ...videoStream.getVideoTracks(),
+                    ...audioDest.stream.getAudioTracks()
+                ]);
+            }
+
+            const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 8000000 });
             const chunks = [];
 
             recorder.ondataavailable = e => {
@@ -834,9 +916,15 @@
             recorder.start();
             const total = decodedFrames.length;
 
+            // Start audio playback if present
+            if (audioSource) {
+                audioSource.start();
+                log('Audio playback started', 'info');
+            }
+
             for (let i = 0; i < total; i++) {
                 recCtx.putImageData(decodedFrames[i], 0, 0);
-                await new Promise(r => setTimeout(r, FRAME_MS));
+                await new Promise(r => setTimeout(r, exportFrameMs));
                 const pct = Math.round(((i + 1) / total) * 100);
                 expFill.style.width = pct + '%';
                 expPct.textContent = pct + '%';
@@ -848,6 +936,12 @@
 
             log('All frames rendered, stopping recorder...', 'info');
             recorder.stop();
+            if (audioSource) {
+                try { audioSource.stop(); } catch(e) {}
+            }
+            if (audioContext) {
+                try { audioContext.close(); } catch(e) {}
+            }
             await done;
         });
     </script>

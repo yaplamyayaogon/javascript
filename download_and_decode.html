@@ -402,6 +402,7 @@
     let isPlaying = false;
     let playTimer = null;
     let isRecording = false;
+    let audioBlob = null;
 
     // Load API Key from localStorage
     const savedKey = localStorage.getItem('rh_api_key');
@@ -486,24 +487,47 @@
             
             setStep('step-query', 'completed');
 
+            // Сначала ищем аудио (ComfyUI_*.mp3) и исключаем его из остальных результатов
+            audioBlob = null;
+            const audioResult = data.results.find(r => /\.mp3$/i.test(r.url) && /ComfyUI_/i.test(r.url));
+            if (audioResult) {
+                log(`Audio detected: ${audioResult.url}`, 'success');
+            }
+
+            // Фильтруем результаты: только изображения (без mp3)
+            const imageResults = data.results.filter(r => !/\.mp3$/i.test(r.url));
+
             // Разделяем по nodeId: 422 = watermark, 421 = кадры
-            const wmResult = data.results.find(r => r.nodeId === '422');
-            const shotResults = data.results.filter(r => r.nodeId === '421');
+            let wmResult = imageResults.find(r => r.nodeId === '422');
+            const shotResults = imageResults.filter(r => r.nodeId === '421');
             
             log(`Found by nodeId: ${shotResults.length} shots (nodeId=421) + ${wmResult ? '1 watermark (nodeId=422)' : 'NO WATERMARK'}`, 'success');
             
-            // Альтернатива: если nodeId другие, ищем по первому элементу (watermark) и остальным (кадры)
+            // Альтернатива: если nodeId другие, ищем по URL
             if (!wmResult || shotResults.length === 0) {
-                log('nodeId method failed, trying index-based detection...', 'info');
-                // Первый файл = watermark, остальные = кадры
-                const wmByIndex = data.results[0];
-                const shotsByIndex = data.results.slice(1);
-                log(`Index-based: ${shotsByIndex.length} shots + 1 watermark`, 'info');
+                log('nodeId method failed, trying URL-based detection...', 'info');
                 
-                // Используем этот метод
-                shotResults.push(...shotsByIndex);
-                if (!wmResult) {
-                    data.results.unshift(wmByIndex);
+                // Watermark: URL содержит watermark/first_frame
+                const wmByUrl = imageResults.find(r => /watermark|first_frame/i.test(r.url));
+                // Кадры: URL содержит frames/shot
+                const shotsByUrl = imageResults.filter(r => /frames|shot/i.test(r.url));
+                
+                if (wmByUrl && shotsByUrl.length > 0) {
+                    log(`URL-based: ${shotsByUrl.length} shots + 1 watermark`, 'info');
+                    shotResults.push(...shotsByUrl);
+                    if (!wmResult) {
+                        // Используем wmByUrl как wmResult
+                        wmResult = wmByUrl;
+                    }
+                } else {
+                    // Fallback: первый = watermark, остальные = кадры
+                    const wmByIndex = imageResults[0];
+                    const shotsByIndex = imageResults.slice(1);
+                    log(`Index-based: ${shotsByIndex.length} shots + 1 watermark`, 'warning');
+                    shotResults.push(...shotsByIndex);
+                    if (!wmResult) {
+                        wmResult = wmByIndex;
+                    }
                 }
             }
             
@@ -542,6 +566,14 @@
             log("Downloading watermark...");
             const wmRes = await fetch(wmResult.url);
             const wmBlob = await wmRes.blob();
+            
+            // Download audio if found
+            if (audioResult) {
+                log('Downloading audio...', 'success');
+                const audioRes = await fetch(audioResult.url);
+                audioBlob = await audioRes.blob();
+                log('Audio downloaded', 'success');
+            }
             
             setStep('step-download', 'completed');
 
@@ -691,33 +723,82 @@
         recCanvas.height = h;
         const recCtx = recCanvas.getContext('2d');
 
-        // Выбираем поддерживаемый кодек
-        let mimeType = 'video/webm;codecs=vp8';
-        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-            mimeType = 'video/webm;codecs=vp9';
-            log('Using VP9 codec', 'info');
-        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-            mimeType = 'video/webm;codecs=vp8';
-            log('Using VP8 codec', 'info');
-        } else if (MediaRecorder.isTypeSupported('video/webm')) {
-            mimeType = 'video/webm';
-            log('Using default WebM codec', 'info');
-        } else {
-            throw new Error('No supported video codec found. Try Chrome or Firefox.');
+        // Determine FPS and audio setup
+        let exportFPS = FPS;
+        let exportFrameMs = FRAME_MS;
+        let audioBuffer = null;
+        let audioContext = null;
+        let audioDest = null;
+        let audioSource = null;
+
+        if (audioBlob) {
+            log('Decoding audio...', 'info');
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            const audioDuration = audioBuffer.duration;
+            log(`Audio duration: ${audioDuration.toFixed(2)}s`, 'info');
+
+            exportFPS = decodedFrames.length / audioDuration;
+            exportFrameMs = 1000 / exportFPS;
+            log(`Calculated FPS: ${exportFPS.toFixed(2)} (${decodedFrames.length} frames / ${audioDuration.toFixed(2)}s)`, 'info');
         }
-        
-        const stream = recCanvas.captureStream(FPS);
-        const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+
+        // Auto-detect codec
+        let mimeType = 'video/webm;codecs=vp8';
+        if (audioBlob) {
+            if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
+                mimeType = 'video/webm;codecs=vp9,opus';
+                log('Using VP9+Opus codec', 'info');
+            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
+                mimeType = 'video/webm;codecs=vp8,opus';
+                log('Using VP8+Opus codec', 'info');
+            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                mimeType = 'video/webm;codecs=vp8';
+                log('Using VP8 codec (audio may not be included)', 'warning');
+            } else {
+                throw new Error('No supported video codec found. Try Chrome or Firefox.');
+            }
+        } else {
+            if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                mimeType = 'video/webm;codecs=vp9';
+                log('Using VP9 codec', 'info');
+            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                mimeType = 'video/webm;codecs=vp8';
+                log('Using VP8 codec', 'info');
+            } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                mimeType = 'video/webm';
+                log('Using default WebM codec', 'info');
+            } else {
+                throw new Error('No supported video codec found. Try Chrome or Firefox.');
+            }
+        }
+
+        // Build stream: video + optional audio
+        const videoStream = recCanvas.captureStream(exportFPS);
+        let combinedStream = videoStream;
+
+        if (audioBlob && audioBuffer) {
+            audioDest = audioContext.createMediaStreamDestination();
+            audioSource = audioContext.createBufferSource();
+            audioSource.buffer = audioBuffer;
+            audioSource.connect(audioDest);
+
+            combinedStream = new MediaStream([
+                ...videoStream.getVideoTracks(),
+                ...audioDest.stream.getAudioTracks()
+            ]);
+        }
+
+        const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 8000000 });
         const chunks = [];
         
         let dataAvailableCount = 0;
-        let lastDataTime = 0;
 
         recorder.ondataavailable = e => { 
             if (e.data.size > 0) {
                 chunks.push(e.data);
                 dataAvailableCount++;
-                lastDataTime = Date.now();
                 log(`Data chunk ${dataAvailableCount}: ${e.data.size} bytes`, 'info');
             }
         };
@@ -726,8 +807,8 @@
             const timeout = setTimeout(() => {
                 log('Recording timeout - forcing stop', 'error');
                 recorder.stop();
-                reject(new Error('Recording timeout after 30 seconds'));
-            }, 30000);
+                reject(new Error('Recording timeout after 60 seconds'));
+            }, 60000);
             
             recorder.onstop = () => {
                 clearTimeout(timeout);
@@ -758,18 +839,23 @@
             };
         });
 
-        log(`Starting recording: ${decodedFrames.length} frames at ${FPS} FPS`, 'info');
+        log(`Starting recording: ${decodedFrames.length} frames at ${exportFPS.toFixed(2)} FPS`, 'info');
         recorder.start();
+
+        // Start audio playback if present
+        if (audioSource) {
+            audioSource.start();
+            log('Audio playback started', 'info');
+        }
 
         const total = decodedFrames.length;
         for (let i = 0; i < total; i++) {
             recCtx.putImageData(decodedFrames[i], 0, 0);
-            await new Promise(r => setTimeout(r, FRAME_MS));
+            await new Promise(r => setTimeout(r, exportFrameMs));
             const pct = Math.round(((i + 1) / total) * 100);
             expFill.style.width = pct + '%';
             expPct.textContent = pct + '%';
             
-            // Лог каждые 25%
             if (i === Math.floor(total * 0.25) || i === Math.floor(total * 0.5) || i === Math.floor(total * 0.75)) {
                 log(`Encoding progress: ${pct}%`, 'info');
             }
@@ -777,6 +863,12 @@
         
         log('All frames rendered, stopping recorder...', 'info');
         recorder.stop();
+        if (audioSource) {
+            try { audioSource.stop(); } catch(e) {}
+        }
+        if (audioContext) {
+            try { audioContext.close(); } catch(e) {}
+        }
         await done;
     };
 </script>
