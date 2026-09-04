@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniMax H3 Ref2VA Generator (15s)</title>
+    <style>
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --bg: #0f0c29;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --error: #ff4b2b;
+            --success: #00f260;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            padding: 40px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        label .tag {
+            color: var(--primary);
+            text-transform: none;
+        }
+
+        label .optional {
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 400;
+            text-transform: none;
+        }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        textarea {
+            height: 60px;
+            resize: vertical;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+            padding-right: 36px;
+        }
+
+        select option {
+            background: #1a1a2e;
+        }
+
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.1);
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(0, 210, 255, 0.05);
+        }
+
+        .drop-zone p { 
+            margin: 0; 
+            color: rgba(255, 255, 255, 0.7); 
+            font-size: 0.85rem;
+            z-index: 1;
+            position: relative;
+        }
+
+        .drop-zone .preview-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .drop-zone .preview-img:hover {
+            opacity: 0.8;
+        }
+
+        .drop-zone.has-image p {
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 8px;
+        }
+
+        .drop-zone.audio-zone {
+            border-style: solid;
+            border-color: rgba(0, 242, 96, 0.35);
+            background: rgba(0, 242, 96, 0.04);
+            min-height: 64px;
+        }
+
+        .drop-zone.audio-zone:hover, .drop-zone.audio-zone.dragover {
+            border-color: var(--success);
+            background: rgba(0, 242, 96, 0.08);
+        }
+
+        .drop-zone.audio-zone p {
+            color: rgba(0, 242, 96, 0.75);
+        }
+
+        .drop-zone.audio-zone.has-image p {
+            color: white;
+        }
+
+        .drop-zone.audio-zone .audio-icon {
+            font-size: 1.4rem;
+            margin-right: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(0, 210, 255, 0.5);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .field-wrapper {
+            position: relative;
+        }
+        
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .field-row input,
+        .field-row textarea,
+        .field-row select {
+            flex: 1;
+        }
+        
+        .history-btn {
+            width: 28px;
+            height: 32px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.7rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .history-btn:hover {
+            background: rgba(0, 210, 255, 0.15);
+            color: var(--primary);
+            border-color: rgba(0, 210, 255, 0.3);
+        }
+        
+        .history-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: rgba(15, 12, 41, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .history-dropdown.show {
+            display: block;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-item:hover {
+            background: rgba(0, 210, 255, 0.1);
+        }
+        
+        .history-item-text {
+            flex: 1;
+            margin-right: 8px;
+            color: #ffffff;
+            font-size: 0.8rem;
+        }
+        
+        .history-item-delete {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: color 0.15s;
+            flex-shrink: 0;
+        }
+        
+        .history-item-delete:hover {
+            color: var(--error);
+        }
+        
+        .history-empty {
+            padding: 12px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+        }
+
+        .status-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            display: none;
+            text-align: left;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .step.active { color: var(--primary); font-weight: 500; }
+        .step.completed { color: var(--success); }
+        .step.failed { color: var(--error); }
+
+        .step-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            flex-shrink: 0;
+        }
+
+        #result-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .video-wrap {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 15px;
+        }
+
+        .video-wrap video {
+            width: 100%;
+            max-height: 480px;
+            border-radius: 10px;
+            display: block;
+            background: #000;
+        }
+
+        .video-note {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: center;
+        }
+
+        .share-link {
+            margin-top: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            color: #8b949e;
+            text-align: center;
+            font-size: 0.8rem;
+            text-decoration: underline;
+        }
+
+        .share-link:hover {
+            color: var(--primary);
+        }
+
+        .log-trigger {
+            margin-top: 0;
+            cursor: pointer;
+            color: var(--primary);
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        #console-log {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>MiniMax H3 Ref2VA Generator (15s)</h1>
+    <p class="subtitle">5 images + 1 audio + 3 LoRA → video. Powered by <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: var(--primary);">RunningHub</a></p>
+
+    <div class="input-group field-wrapper" data-history="api-key">
+        <label for="api-key"><a href="https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a> API Key</label>
+        <div class="field-row">
+            <button class="history-btn" type="button" title="History">▼</button>
+            <input type="text" id="api-key" placeholder="Enter your 32-bit API Key...">
+        </div>
+        <div class="history-dropdown"></div>
+        <div style="margin-top: 5px; text-align: left;">
+            <a href="https://www.runninghub.ai/enterprise-api/consumerApi?inviteCode=qlbtubgi" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none;">Get your API Key here</a>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Picture 0 <span class="tag">&lt;Picture 0&gt;</span> <span style="color: var(--error);">*</span></label>
+        <div class="drop-zone" id="drop-zone-0">
+            <p id="file-info-0">Click or drag photo here (required)</p>
+            <input type="file" id="file-input-0" accept="image/*" style="display: none;">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Picture 1 <span class="tag">&lt;Picture 1&gt;</span> <span class="optional">(optional)</span></label>
+        <div class="drop-zone" id="drop-zone-1">
+            <p id="file-info-1">Click or drag photo here (optional)</p>
+            <input type="file" id="file-input-1" accept="image/*" style="display: none;">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Picture 2 <span class="tag">&lt;Picture 2&gt;</span> <span class="optional">(optional)</span></label>
+        <div class="drop-zone" id="drop-zone-2">
+            <p id="file-info-2">Click or drag photo here (optional)</p>
+            <input type="file" id="file-input-2" accept="image/*" style="display: none;">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Picture 3 <span class="tag">&lt;Picture 3&gt;</span> <span class="optional">(optional)</span></label>
+        <div class="drop-zone" id="drop-zone-3">
+            <p id="file-info-3">Click or drag photo here (optional)</p>
+            <input type="file" id="file-input-3" accept="image/*" style="display: none;">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Picture 4 <span class="tag">&lt;Picture 4&gt;</span> <span class="optional">(optional)</span></label>
+        <div class="drop-zone" id="drop-zone-4">
+            <p id="file-info-4">Click or drag photo here (optional)</p>
+            <input type="file" id="file-input-4" accept="image/*" style="display: none;">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Audio <span class="tag">&lt;Audio 0&gt;</span> <span class="optional">(optional)</span></label>
+        <div class="drop-zone audio-zone" id="drop-zone-audio">
+            <p id="file-info-audio"><span class="audio-icon">🎵</span>Click or drag audio file here (optional)</p>
+            <input type="file" id="file-input-audio" accept="audio/*,video/mp4" style="display: none;">
+        </div>
+    </div>
+
+    <div class="input-group field-wrapper" data-history="lora-1">
+        <label for="lora-1">LoRA 1</label>
+        <div class="field-row">
+            <button class="history-btn" type="button" title="History">▼</button>
+            <input type="text" id="lora-1" value="MultiEbatel2_MMH3_0_0030.safetensors">
+        </div>
+        <div class="history-dropdown"></div>
+    </div>
+
+    <div class="input-group">
+        <label for="strength-1">Strength LoRA 1</label>
+        <input type="text" id="strength-1" value="0.4000000000000001">
+    </div>
+
+    <div class="input-group field-wrapper" data-history="lora-2">
+        <label for="lora-2">LoRA 2</label>
+        <div class="field-row">
+            <button class="history-btn" type="button" title="History">▼</button>
+            <input type="text" id="lora-2" value="MotionBoostMM-H3_0_0030.safetensors">
+        </div>
+        <div class="history-dropdown"></div>
+    </div>
+
+    <div class="input-group">
+        <label for="strength-2">Strength LoRA 2</label>
+        <input type="text" id="strength-2" value="0.4000000000000001">
+    </div>
+
+    <div class="input-group field-wrapper" data-history="lora-3">
+        <label for="lora-3">LoRA 3</label>
+        <div class="field-row">
+            <button class="history-btn" type="button" title="History">▼</button>
+            <input type="text" id="lora-3" value="whisper-MiniMaxH3_0_0030.safetensors">
+        </div>
+        <div class="history-dropdown"></div>
+    </div>
+
+    <div class="input-group">
+        <label for="strength-3">Strength LoRA 3</label>
+        <input type="text" id="strength-3" value="0">
+    </div>
+
+    <div class="input-group field-wrapper" data-history="prompt">
+        <label for="prompt">Prompt</label>
+        <div class="field-row">
+            <button class="history-btn" type="button" title="History">▼</button>
+            <textarea id="prompt" placeholder="Describe the video. Reference images as <Picture 0>...<Picture 4> and audio as <Audio 0>..."></textarea>
+        </div>
+        <div class="history-dropdown"></div>
+    </div>
+
+    <div class="input-group">
+        <label for="aspect-ratio">Aspect Ratio</label>
+        <select id="aspect-ratio">
+            <option value="1:1 (Square)">1:1 (Square)</option>
+            <option value="2:3 (Portrait Photo)">2:3 (Portrait Photo)</option>
+            <option value="3:2 (Photo)">3:2 (Photo)</option>
+            <option value="3:4 (Portrait Standard)" selected>3:4 (Portrait Standard)</option>
+            <option value="4:3 (Standard)">4:3 (Standard)</option>
+            <option value="9:16 (Portrait Widescreen)">9:16 (Portrait Widescreen)</option>
+            <option value="16:9 (Widescreen)">16:9 (Widescreen)</option>
+            <option value="21:9 (Ultrawide)">21:9 (Ultrawide)</option>
+        </select>
+    </div>
+
+    <button id="start-btn" disabled>Generate Video</button>
+
+    <div class="status-panel" id="status-panel">
+        <div class="step" id="step-upload">
+            <div class="step-icon">1</div> Uploading assets...
+        </div>
+        <div class="step" id="step-submit">
+            <div class="step-icon">2</div> Submitting task to <a href="https://www.runninghub.ai/?inviteCode=qlbtubgi" target="_blank" style="color: inherit; text-decoration: underline;">RunningHub</a>...
+        </div>
+        <div class="step" id="step-process">
+            <div class="step-icon">3</div> Running AI workflow...
+        </div>
+    </div>
+
+    <div id="result-container">
+        <h3>Result Ready</h3>
+
+        <div class="video-wrap">
+            <video id="result-video" controls></video>
+            <div class="video-note">⚠ Result URL is valid for 24 hours — download the video before it expires.</div>
+        </div>
+
+        <button id="btn-download" style="margin-top:15px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
+            <span>⬇</span> Download Video
+        </button>
+    </div>
+
+    <div class="share-link" id="share-link" onclick="copyShareUrl()" title="Copy settings link">Share Settings</div>
+    <div class="log-trigger" onclick="toggleLog()">Technical Log</div>
+    <div id="console-log"></div>
+</div>
+
+<script>
+    // Config
+    const WORKFLOW_ID = "2095711482746306561";
+
+    // UI Input
+    const apiKeyInput = document.getElementById('api-key');
+    const promptInput = document.getElementById('prompt');
+    const lora1Input = document.getElementById('lora-1');
+    const strength1Input = document.getElementById('strength-1');
+    const lora2Input = document.getElementById('lora-2');
+    const strength2Input = document.getElementById('strength-2');
+    const lora3Input = document.getElementById('lora-3');
+    const strength3Input = document.getElementById('strength-3');
+    const aspectRatioSelect = document.getElementById('aspect-ratio');
+    const startBtn = document.getElementById('start-btn');
+    const statusPanel = document.getElementById('status-panel');
+    const resultContainer = document.getElementById('result-container');
+    const consoleLog = document.getElementById('console-log');
+
+    // Dropzones: Picture 0 (required) + Picture 1-4 (optional) + Audio (optional)
+    const imageSlots = [
+        { nodeId: "182", zone: 'drop-zone-0', input: 'file-input-0', info: 'file-info-0', file: null },
+        { nodeId: "239", zone: 'drop-zone-1', input: 'file-input-1', info: 'file-info-1', file: null },
+        { nodeId: "240", zone: 'drop-zone-2', input: 'file-input-2', info: 'file-info-2', file: null },
+        { nodeId: "241", zone: 'drop-zone-3', input: 'file-input-3', info: 'file-info-3', file: null },
+        { nodeId: "242", zone: 'drop-zone-4', input: 'file-input-4', info: 'file-info-4', file: null }
+    ];
+    const audioSlot = { nodeId: "248", zone: 'drop-zone-audio', input: 'file-input-audio', info: 'file-info-audio', file: null };
+
+    // Result
+    const resultVideo = document.getElementById('result-video');
+    const btnDownload = document.getElementById('btn-download');
+    let resultUrl = null;
+
+    // Load API Key
+    const savedKey = localStorage.getItem('rh_api_key');
+    if (savedKey) apiKeyInput.value = savedKey;
+
+    apiKeyInput.oninput = () => {
+        localStorage.setItem('rh_api_key', apiKeyInput.value);
+        validateInputs();
+    };
+
+    // Read GET parameters
+    (function applyUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const fields = {
+            'prompt': promptInput,
+            'lora-1': lora1Input,
+            'strength-1': strength1Input,
+            'lora-2': lora2Input,
+            'strength-2': strength2Input,
+            'lora-3': lora3Input,
+            'strength-3': strength3Input
+        };
+        for (const [key, el] of Object.entries(fields)) {
+            if (params.has(key)) el.value = params.get(key);
+        }
+        if (params.has('aspect-ratio')) aspectRatioSelect.value = params.get('aspect-ratio');
+    })();
+
+    // Share Settings
+    function copyShareUrl() {
+        const params = new URLSearchParams();
+        if (promptInput.value) params.set('prompt', promptInput.value);
+        if (lora1Input.value) params.set('lora-1', lora1Input.value);
+        if (strength1Input.value) params.set('strength-1', strength1Input.value);
+        if (lora2Input.value) params.set('lora-2', lora2Input.value);
+        if (strength2Input.value) params.set('strength-2', strength2Input.value);
+        if (lora3Input.value) params.set('lora-3', lora3Input.value);
+        if (strength3Input.value) params.set('strength-3', strength3Input.value);
+        if (aspectRatioSelect.value) params.set('aspect-ratio', aspectRatioSelect.value);
+
+        // window.location.origin равен "null" при открытии через file:// — собираем URL из href
+        const baseUrl = window.location.href.split('?')[0];
+        const url = baseUrl + '?' + params.toString();
+        
+        if (url.length > 2000) {
+            log('Warning: URL is very long (' + url.length + ' chars). Some browsers may truncate it.', 'error');
+        }
+
+        navigator.clipboard.writeText(url).then(() => {
+            const el = document.getElementById('share-link');
+            el.textContent = '✓ Copied!';
+            setTimeout(() => { el.textContent = 'Share Settings'; }, 2000);
+        }).catch(() => {
+            log('Could not copy to clipboard. URL: ' + url, 'info');
+        });
+    }
+
+    // History Management
+    const HISTORY_MAX = 10;
+    const HISTORY_KEYS = {
+        'api-key': 'lh_api_key_history',
+        'lora-1': 'lh_lora1_history',
+        'lora-2': 'lh_lora2_history',
+        'lora-3': 'lh_lora3_history',
+        'prompt': 'lh_prompt_history'
+    };
+
+    function getHistory(key) {
+        try {
+            const history = JSON.parse(localStorage.getItem(key)) || [];
+            return history.filter(v => v && typeof v === 'string' && v.trim().length > 0);
+        } catch { return []; }
+    }
+
+    function saveToHistory(key, value) {
+        if (!value || !value.trim()) return;
+        const history = getHistory(key);
+        const filtered = history.filter(v => v !== value.trim());
+        filtered.unshift(value.trim());
+        while (filtered.length > HISTORY_MAX) filtered.pop();
+        localStorage.setItem(key, JSON.stringify(filtered));
+    }
+
+    function deleteFromHistory(key, index) {
+        const history = getHistory(key);
+        history.splice(index, 1);
+        localStorage.setItem(key, JSON.stringify(history));
+    }
+
+    function showHistoryDropdown(wrapper, key) {
+        const dropdown = wrapper.querySelector('.history-dropdown');
+        const history = getHistory(key);
+        
+        dropdown.innerHTML = '';
+        
+        if (history.length === 0) {
+            dropdown.innerHTML = '<div class="history-empty">No history yet</div>';
+        } else {
+            history.forEach((value, index) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.setAttribute('data-index', index);
+                
+                const textSpan = document.createElement('span');
+                textSpan.className = 'history-item-text';
+                textSpan.textContent = value;
+                textSpan.title = value;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'history-item-delete';
+                deleteBtn.type = 'button';
+                deleteBtn.title = 'Delete';
+                deleteBtn.textContent = '×';
+                
+                item.appendChild(textSpan);
+                item.appendChild(deleteBtn);
+                dropdown.appendChild(item);
+            });
+        }
+        
+        dropdown.classList.add('show');
+        
+        dropdown.onclick = (e) => {
+            const deleteBtn = e.target.closest('.history-item-delete');
+            if (deleteBtn) {
+                const item = deleteBtn.closest('.history-item');
+                const idx = parseInt(item.getAttribute('data-index'), 10);
+                deleteFromHistory(key, idx);
+                showHistoryDropdown(wrapper, key);
+                return;
+            }
+            
+            const item = e.target.closest('.history-item');
+            if (item) {
+                const textSpan = item.querySelector('.history-item-text');
+                const input = wrapper.querySelector('input, textarea');
+                if (input && textSpan) {
+                    input.value = textSpan.textContent;
+                    input.dispatchEvent(new Event('input'));
+                }
+                dropdown.classList.remove('show');
+            }
+        };
+    }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.history-dropdown.show').forEach(d => d.classList.remove('show'));
+    }
+
+    document.querySelectorAll('.field-wrapper').forEach(wrapper => {
+        const key = wrapper.dataset.history;
+        const btn = wrapper.querySelector('.history-btn');
+        const input = wrapper.querySelector('input, textarea');
+        
+        if (btn && key) {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const dropdown = wrapper.querySelector('.history-dropdown');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                } else {
+                    closeAllDropdowns();
+                    showHistoryDropdown(wrapper, key);
+                }
+            };
+        }
+        
+        if (input) {
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    saveToHistory(key, input.value);
+                }, 150);
+            });
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.field-wrapper')) {
+            closeAllDropdowns();
+        }
+    });
+
+    [promptInput, lora1Input, strength1Input, lora2Input, strength2Input, lora3Input, strength3Input].forEach(el => {
+        el.oninput = validateInputs;
+    });
+
+    // Dropzones
+    function setupDropzone(slot, acceptCheck) {
+        const zone = document.getElementById(slot.zone);
+        const input = document.getElementById(slot.input);
+        const info = document.getElementById(slot.info);
+
+        zone.onclick = () => input.click();
+        input.onchange = (e) => handleFile(e.target.files[0]);
+        zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('dragover'); };
+        zone.ondragleave = () => zone.classList.remove('dragover');
+        zone.ondrop = (e) => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        };
+
+        function handleFile(file) {
+            if (file && acceptCheck(file)) {
+                slot.file = file;
+                const oldPreview = zone.querySelector('.preview-img');
+                if (oldPreview) oldPreview.remove();
+                if (file.type.startsWith('image/')) {
+                    const imgUrl = URL.createObjectURL(file);
+                    const img = document.createElement('img');
+                    img.className = 'preview-img';
+                    img.src = imgUrl;
+                    zone.appendChild(img);
+                }
+                const icon = zone.classList.contains('audio-zone') ? '<span class="audio-icon">🎵</span>' : '';
+                info.innerHTML = `${icon}✓ ${file.name}`;
+                zone.classList.add('has-image');
+                validateInputs();
+            }
+        }
+    }
+
+    imageSlots.forEach(slot => setupDropzone(slot, f => f.type.startsWith('image/')));
+    setupDropzone(audioSlot, f => f.type.startsWith('audio/') || f.type === 'video/mp4');
+
+    function validateInputs() {
+        // Picture 0 обязателен, аудио и остальные картинки — опциональны
+        startBtn.disabled = !(imageSlots[0].file && apiKeyInput.value.length >= 30);
+    }
+
+    function log(msg, type = 'info') {
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.style.color = type === 'error' ? '#ff4b2b' : (type === 'success' ? '#00f260' : (type === 'warning' ? '#ffcc00' : '#0f0'));
+        entry.innerText = `[${time}] ${msg}`;
+        consoleLog.appendChild(entry);
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+
+    function toggleLog() {
+        consoleLog.style.display = consoleLog.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function setStep(id, status) {
+        const el = document.getElementById(id);
+        el.className = `step ${status}`;
+        if (status === 'active') el.querySelector('.step-icon').innerText = '●';
+        if (status === 'completed') el.querySelector('.step-icon').innerText = '✓';
+        if (status === 'failed') el.querySelector('.step-icon').innerText = '✕';
+    }
+
+    // Main workflow
+    startBtn.onclick = async () => {
+        const apiKey = apiKeyInput.value.trim();
+        startBtn.disabled = true;
+        statusPanel.style.display = 'block';
+        resultContainer.style.display = 'none';
+        
+        try {
+            // Upload assets
+            setStep('step-upload', 'active');
+            log("Uploading assets...");
+            
+            const nodeInfoList = [];
+
+            // Picture 0 (required)
+            const upload0 = await uploadToRH(imageSlots[0].file, apiKey);
+            log(`Picture 0 uploaded: ${upload0}`, 'success');
+            nodeInfoList.push({ nodeId: imageSlots[0].nodeId, fieldName: "image", fieldValue: upload0, description: "Picture 0" });
+
+            // Picture 1-4 (optional — только выбранные; невыбранные используют дефолт воркфлоу)
+            for (let i = 1; i < imageSlots.length; i++) {
+                const slot = imageSlots[i];
+                if (slot.file) {
+                    const up = await uploadToRH(slot.file, apiKey);
+                    log(`Picture ${i} uploaded: ${up}`, 'success');
+                    nodeInfoList.push({ nodeId: slot.nodeId, fieldName: "image", fieldValue: up, description: `Picture ${i}` });
+                } else {
+                    log(`Picture ${i}: not selected, workflow default will be used`, 'info');
+                }
+            }
+
+            // Audio (optional)
+            if (audioSlot.file) {
+                const upAudio = await uploadToRH(audioSlot.file, apiKey);
+                log(`Audio uploaded: ${upAudio}`, 'success');
+                nodeInfoList.push({ nodeId: audioSlot.nodeId, fieldName: "audio", fieldValue: upAudio, description: "Audio 0" });
+            } else {
+                log("Audio: not selected, workflow default will be used", 'info');
+            }
+
+            // LoRA 1-3
+            nodeInfoList.push({ nodeId: "219", fieldName: "lora_name", fieldValue: lora1Input.value, description: "LoRA 1" });
+            nodeInfoList.push({ nodeId: "219", fieldName: "strength_model", fieldValue: strength1Input.value, description: "Strength LoRA 1" });
+            nodeInfoList.push({ nodeId: "220", fieldName: "lora_name", fieldValue: lora2Input.value, description: "LoRA 2" });
+            nodeInfoList.push({ nodeId: "220", fieldName: "strength_model", fieldValue: strength2Input.value, description: "Strength LoRA 2" });
+            nodeInfoList.push({ nodeId: "221", fieldName: "lora_name", fieldValue: lora3Input.value, description: "LoRA 3" });
+            nodeInfoList.push({ nodeId: "221", fieldName: "strength_model", fieldValue: strength3Input.value, description: "Strength LoRA 3" });
+
+            // Aspect ratio + prompt
+            nodeInfoList.push({ nodeId: "115", fieldName: "aspect_ratio", fieldValue: aspectRatioSelect.value, description: "Aspect Ratio" });
+            nodeInfoList.push({ nodeId: "173", fieldName: "value", fieldValue: promptInput.value, description: "Prompt" });
+
+            setStep('step-upload', 'completed');
+
+            // Submit task
+            setStep('step-submit', 'active');
+            log("Submitting task to AI workflow...");
+            
+            const payload = {
+                nodeInfoList: nodeInfoList,
+                instanceType: "default",
+                usePersonalQueue: "false"
+            };
+
+            const rhSubmitRes = await fetch(`https://www.runninghub.ai/openapi/v2/run/ai-app/${WORKFLOW_ID}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(payload)
+            });
+            const rhSubmitData = await rhSubmitRes.json();
+            if (!rhSubmitRes.ok || !rhSubmitData.taskId) throw new Error("Workflow submission failed");
+            
+            log(`Task ID: ${rhSubmitData.taskId}`, 'success');
+            setStep('step-submit', 'completed');
+
+            // Poll task
+            setStep('step-process', 'active');
+            pollStatus(rhSubmitData.taskId, apiKey);
+
+        } catch (err) {
+            log(err.message, 'error');
+            alert(err.message);
+            startBtn.disabled = false;
+        }
+    };
+
+    async function uploadToRH(file, apiKey) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('https://www.runninghub.ai/openapi/v2/media/upload/binary', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+            body: formData
+        });
+        const data = await res.json();
+        if (data.code !== 0) throw new Error(`Upload ${file.name} failed: ` + data.message);
+        return data.data.download_url;
+    }
+
+    async function pollStatus(taskId, apiKey) {
+        const queryUrl = "https://www.runninghub.ai/openapi/v2/query";
+        while (true) {
+            try {
+                const res = await fetch(queryUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({ taskId: taskId })
+                });
+                const data = await res.json();
+                log(`Status: ${data.status}`);
+
+                if (data.status === 'SUCCESS') {
+                    setStep('step-process', 'completed');
+                    log(`Results: ${data.results?.length ?? 0} files`, 'success');
+                    for (let i = 0; i < Math.min(3, data.results?.length ?? 0); i++) {
+                        log(`Result[${i}]: ${data.results[i].url}`, 'info');
+                    }
+                    
+                    processResults(data.results);
+                    break;
+                } else if (data.status === 'FAILED') {
+                    throw new Error("Task execution failed: " + (data.errorMessage || 'Unknown error'));
+                }
+                await new Promise(r => setTimeout(r, 10000));
+            } catch (err) {
+                log(err.message, 'error');
+                setStep('step-process', 'failed');
+                startBtn.disabled = false;
+                break;
+            }
+        }
+    }
+
+    function processResults(results) {
+        try {
+            if (!results || results.length === 0) {
+                throw new Error('No results found.');
+            }
+
+            // Ищем видеофайл (mp4/webm/mov), иначе берём первый результат
+            const videoResult = results.find(r => /\.(mp4|webm|mov)$/i.test(r.url)) || results[0];
+            resultUrl = videoResult.url;
+            log(`Video result: ${resultUrl}`, 'success');
+
+            resultVideo.src = resultUrl;
+            btnDownload.onclick = () => {
+                const a = document.createElement('a');
+                a.href = resultUrl;
+                a.download = `rh_ref2va_${Date.now()}.mp4`;
+                a.target = '_blank';
+                a.click();
+                log("Download started", 'success');
+            };
+
+            resultContainer.style.display = 'block';
+            startBtn.disabled = false;
+
+        } catch (err) {
+            log(err.message, 'error');
+            setStep('step-process', 'failed');
+            startBtn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
