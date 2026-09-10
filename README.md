@@ -10,6 +10,7 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 | [wan22-16fps-6sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-6sec.html) | 6 sec | 97 | 16 |
 | [minimax-h3-24fps-15sec.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-24fps-15sec.html) | 15 sec | 360 | 24 |
 | [minimax-h3-ref2va-15sec-5img-1audio-3lora.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-5img-1audio-3lora.html) | 15 sec | video | 24 |
+| [minimax-h3-15sec-1img-3lora.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-15sec-1img-3lora.html) | 15 sec | video | 24 |
 
 ## Tools
 
@@ -38,6 +39,13 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 - **5 image slots** — Picture 0 (required) + Picture 1–4 (optional, workflow defaults used if not selected)
 - **1 audio slot** (optional) — audio or mp4
 - **Prompt tags** — reference images as `<Picture 0>`...`<Picture 4>` and audio as `<Audio 0>` in the prompt
+- **3 LoRA slots** with individual strength
+- **Aspect ratio** selector
+- **Direct video output** — result is a ready video file, no frame decoding needed
+
+## MiniMax H3 (1 Image) Features
+
+- **1 image slot** (required)
 - **3 LoRA slots** with individual strength
 - **Aspect ratio** selector
 - **Direct video output** — result is a ready video file, no frame decoding needed
