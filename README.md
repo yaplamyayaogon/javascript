@@ -6,11 +6,12 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 
 | File | Duration | Frames | FPS |
 |------|----------|--------|-----|
-| [wan22-16fps-8sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-8sec.html) | 8 sec | 141 | 16 |
-| [wan22-16fps-6sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-6sec.html) | 6 sec | 97 | 16 |
-| [minimax-h3-24fps-15sec.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-24fps-15sec.html) | 15 sec | 360 | 24 |
-| [minimax-h3-ref2va-15sec-5img-1audio-3lora.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-5img-1audio-3lora.html) | 15 sec | video | 24 |
+| [minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp-portrait.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp-portrait.html) | 15 sec | video | 24 |
 | [minimax-h3-15sec-1img-3lora.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-15sec-1img-3lora.html) | 15 sec | video | 24 |
+| [minimax-h3-ref2va-15sec-5img-1audio-3lora.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-5img-1audio-3lora.html) | 15 sec | video | 24 |
+| [minimax-h3-24fps-15sec.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-24fps-15sec.html) | 15 sec | 360 | 24 |
+| [wan22-16fps-6sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-6sec.html) | 6 sec | 97 | 16 |
+| [wan22-16fps-8sec.html](https://yaplamyayaogon.github.io/javascript/wan22-16fps-8sec.html) | 8 sec | 141 | 16 |
 
 ## Tools
 
@@ -27,12 +28,23 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 4. Click "Generate Video"
 5. Wait for decoding → preview → download WebM
 
-## MiniMax H3 Features
+## MiniMax H3 Ref2VA (6 Images) Features
 
-- **3 LoRA slots** (LoRA 1/2/3) with individual strength
-- **Aspect ratio** selector (1:1, 2:3, 3:2, 3:4, 4:3, 9:16, 16:9, 21:9)
-- **Audio support** — auto-detects `ComfyUI_*.mp3` in results, FPS calculated from audio duration
-- **24 FPS** default (vs 16 FPS in Wan2.2 generators)
+- **6 image slots** — Picture 1 (required) + Picture 2–6 (optional, workflow defaults used if not selected)
+- **1 audio slot** (optional) — audio or mp4
+- **Prompt tags** — reference images as `<Picture 1>`...`<Picture 6>` and audio as `<Audio 1>` in the prompt
+- **Default prompt** — subject definitions template pre-filled
+- **3 LoRA slots** with individual strength
+- **1 MP output** — fixed resolution, no aspect ratio selector
+- **Portrait 9:16** aspect ratio
+- **Direct video output** — result is a ready video file, no frame decoding needed
+
+## MiniMax H3 (1 Image) Features
+
+- **1 image slot** (required)
+- **3 LoRA slots** with individual strength
+- **Aspect ratio** selector
+- **Direct video output** — result is a ready video file, no frame decoding needed
 
 ## MiniMax H3 Ref2VA Features
 
@@ -43,12 +55,12 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 - **Aspect ratio** selector
 - **Direct video output** — result is a ready video file, no frame decoding needed
 
-## MiniMax H3 (1 Image) Features
+## MiniMax H3 Features
 
-- **1 image slot** (required)
-- **3 LoRA slots** with individual strength
-- **Aspect ratio** selector
-- **Direct video output** — result is a ready video file, no frame decoding needed
+- **3 LoRA slots** (LoRA 1/2/3) with individual strength
+- **Aspect ratio** selector (1:1, 2:3, 3:2, 3:4, 4:3, 9:16, 16:9, 21:9)
+- **Audio support** — auto-detects `ComfyUI_*.mp3` in results, FPS calculated from audio duration
+- **24 FPS** default (vs 16 FPS in Wan2.2 generators)
 
 ## Share Settings
 
