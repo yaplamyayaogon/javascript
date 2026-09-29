@@ -6,7 +6,7 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 
 | File | Duration | Output | FPS |
 |------|----------|--------|-----|
-| [video-edit-1video-1img-1lora.html](https://yaplamyayaogon.github.io/javascript/video-edit-1video-1img-1lora.html) | source | video | source |
+| [video-edit-1video-1img-1lora.html](https://yaplamyayaogon.github.io/javascript/video-edit-1video-1img-1lora.html) | source | video | 24 |
 | [minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp.html) | 15 sec | video | 24 |
 | [minimax-h3-ref2va-15sec-1img-1audio-3lora-1mp.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-1img-1audio-3lora-1mp.html) | 15 sec | video | 24 |
 | [minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp-portrait.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp-portrait.html) | 15 sec | video | 24 |
