@@ -6,6 +6,8 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 
 | File | Duration | Output | FPS |
 |------|----------|--------|-----|
+| [video-edit-1video-1img-1lora.html](https://yaplamyayaogon.github.io/javascript/video-edit-1video-1img-1lora.html) | source | video | source |
+| [minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp.html) | 15 sec | video | 24 |
 | [minimax-h3-ref2va-15sec-1img-1audio-3lora-1mp.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-1img-1audio-3lora-1mp.html) | 15 sec | video | 24 |
 | [minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp-portrait.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-ref2va-15sec-6img-1audio-3lora-1mp-portrait.html) | 15 sec | video | 24 |
 | [minimax-h3-15sec-1img-3lora.html](https://yaplamyayaogon.github.io/javascript/minimax-h3-15sec-1img-3lora.html) | 15 sec | video | 24 |
@@ -29,6 +31,24 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 4. Click "Generate Video"
 5. Preview → download (result URL valid for 24 hours)
 
+## Video Edit Features
+
+- **1 video slot** (required) — source video for the edit
+- **1 image slot** (required) — reference image
+- **Prompt tags** — reference the video as `<Video 1>` and the image as `<Picture 1>`
+- **Default prompt** — head swap template pre-filled
+- **1 LoRA slot** with strength
+- **Direct video output** — result is a ready video file
+
+## MiniMax H3 Ref2VA (6 Images + Audio) Features
+
+- **6 image slots** — Picture 1 (required) + Picture 2–6 (optional, workflow defaults used if not selected)
+- **1 audio slot** (optional) — audio or mp4
+- **Prompt tags** — reference images as `<Picture 1>`...`<Picture 6>` and audio as `<Audio 1>` in the prompt
+- **Default prompt** — subject definitions template pre-filled
+- **3 LoRA slots** with individual strength
+- **1 MP output** — resolution follows Picture 1, no aspect ratio selector
+
 ## MiniMax H3 Ref2VA (1 Image + Audio) Features
 
 - **1 image slot** (required) — resolution follows Picture 1
@@ -38,7 +58,7 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 - **3 LoRA slots** with individual strength
 - **1 MP output** — fixed resolution, no aspect ratio selector
 
-## MiniMax H3 Ref2VA (6 Images) Features
+## MiniMax H3 Ref2VA (6 Images, Portrait 9:16) Features
 
 - **6 image slots** — Picture 1 (required) + Picture 2–6 (optional, workflow defaults used if not selected)
 - **1 audio slot** (optional) — audio or mp4
@@ -47,9 +67,12 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 - **3 LoRA slots** with individual strength
 - **1 MP output** — fixed resolution, no aspect ratio selector
 - **Portrait 9:16** aspect ratio
-- **Aspect ratio** selector
 
-## MiniMax H3 Features
+## MiniMax H3 (1 Image) Features
+
+- **1 image slot** (required)
+- **3 LoRA slots** with individual strength
+- **Aspect ratio** selector
 
 ## MiniMax H3 Ref2VA Features
 
