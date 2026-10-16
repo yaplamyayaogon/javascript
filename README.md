@@ -39,6 +39,7 @@ Generate videos from images via [RunningHub](https://www.runninghub.ai/?inviteCo
 - **Prompt tags** — reference the video as `<Video 1>` and images as `<Picture 1>`...`<Picture 6>`
 - **Default prompt** — head swap template pre-filled
 - **1 LoRA slot** with strength
+- **Instance type** selector — default (24G) / plus (48G) / ultra (84G) VRAM
 - **Direct video output** — result is a ready video file
 
 ## Video Edit (1 Image) Features

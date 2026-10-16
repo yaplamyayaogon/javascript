@@ -513,6 +513,15 @@
         <input type="text" id="strength-1" value="1.0000000000000002">
     </div>
 
+    <div class="input-group">
+        <label for="instance-type">Instance Type</label>
+        <select id="instance-type">
+            <option value="default" selected>default (24G VRAM)</option>
+            <option value="plus">plus (48G VRAM)</option>
+            <option value="ultra">ultra (84G VRAM)</option>
+        </select>
+    </div>
+
     <div class="input-group field-wrapper" data-history="prompt">
         <label for="prompt">Prompt</label>
         <div class="field-row">
@@ -590,6 +599,7 @@ N/A</textarea>
     const promptInput = document.getElementById('prompt');
     const lora1Input = document.getElementById('lora-1');
     const strength1Input = document.getElementById('strength-1');
+    const instanceTypeInput = document.getElementById('instance-type');
     const startBtn = document.getElementById('start-btn');
     const statusPanel = document.getElementById('status-panel');
     const resultContainer = document.getElementById('result-container');
@@ -626,7 +636,8 @@ N/A</textarea>
         const fields = {
             'prompt': promptInput,
             'lora-1': lora1Input,
-            'strength-1': strength1Input
+            'strength-1': strength1Input,
+            'instance-type': instanceTypeInput
         };
         for (const [key, el] of Object.entries(fields)) {
             if (params.has(key)) el.value = params.get(key);
@@ -639,6 +650,7 @@ N/A</textarea>
         if (promptInput.value) params.set('prompt', promptInput.value);
         if (lora1Input.value) params.set('lora-1', lora1Input.value);
         if (strength1Input.value) params.set('strength-1', strength1Input.value);
+        if (instanceTypeInput.value) params.set('instance-type', instanceTypeInput.value);
 
         // window.location.origin равен "null" при открытии через file:// — собираем URL из href
         const baseUrl = window.location.href.split('?')[0];
@@ -780,7 +792,7 @@ N/A</textarea>
         }
     });
 
-    [promptInput, lora1Input, strength1Input].forEach(el => {
+    [promptInput, lora1Input, strength1Input, instanceTypeInput].forEach(el => {
         el.oninput = validateInputs;
     });
 
@@ -900,7 +912,7 @@ N/A</textarea>
             
             const payload = {
                 nodeInfoList: nodeInfoList,
-                instanceType: "default",
+                instanceType: instanceTypeInput.value,
                 usePersonalQueue: "false"
             };
 
